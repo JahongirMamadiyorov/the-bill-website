@@ -485,7 +485,6 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
 function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, onPaid }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [view, setView] = useState('details'); // 'details' | 'payment'
   const [cancelling, setCancelling] = useState(false);
 
   if (!table) return null;
@@ -526,8 +525,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          {view === 'details' ? (
-            hasOrder ? (
+          {hasOrder ? (
               <div className="space-y-4">
                 {/* Bill requested banner */}
                 {billRequested && (
@@ -591,7 +589,12 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                     {t('cashier.orders.addItems')}
                   </button>
                   <button
-                    onClick={() => setView('payment')}
+                    onClick={() => {
+                      // Open the SAME Process Payment modal that Cashier Orders uses
+                      // by routing to /cashier?open=<id>&pay=1
+                      onClose();
+                      navigate(`/cashier?open=${encodeURIComponent(order.id)}&pay=1`);
+                    }}
                     className="flex-1 py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition"
                     style={{ backgroundColor: '#0891B2' }}
                   >
@@ -694,16 +697,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                   {t('admin.orders.newOrder')}
                 </button>
               </div>
-            )
-          ) : (
-            <PaymentPanel
-              order={order}
-              taxSettings={taxSettings}
-              restSettings={restSettings}
-              onPaid={() => { onPaid(); onClose(); }}
-              onBack={() => setView('details')}
-            />
-          )}
+            )}
         </div>
     </div>
   );

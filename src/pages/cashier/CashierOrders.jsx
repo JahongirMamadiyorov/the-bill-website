@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   ShoppingBag, DollarSign, CheckCircle2, TrendingUp, X, Loader2,
   Clock, User, AlertCircle, ChevronDown, Check, CreditCard, QrCode,
@@ -281,7 +281,7 @@ function ReceiptModal({ order, payment, restSettings, taxSettings, user, onClose
 }
 
 // ─── Order Details + Payment Panel ───────────────────────────────────────────
-function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) {
+function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid, autoOpenPay = false }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -317,6 +317,14 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       .catch(() => setErr(t('cashier.orders.couldNotLoadOrder')))
       .finally(() => setLoading(false));
   }, [order.id]);
+
+  // ── Auto-open Pay modal when arriving with ?pay=1 ─────────────────────────
+  useEffect(() => {
+    if (autoOpenPay && full && !showPayModal) {
+      setShowPayModal(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenPay, full]);
 
   // ── Order items ───────────────────────────────────────────────────────────
   const items = full?.items || full?.orderItems || [];
@@ -1016,12 +1024,15 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
 export default function CashierOrders() {
   const { t } = useTranslation();
   const { user, restaurant } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [orders,    setOrders]    = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
   const [activeTab, setActiveTab] = useState('restaurantOrders');
   const [selected,  setSelected]  = useState(null);  // order being viewed/paid
+  const [autoPay,   setAutoPay]   = useState(false); // auto-open Pay modal when arriving via ?pay=1
 
   // Stats
   const [stats, setStats] = useState({ pending: 0, doneToday: 0, revenue: 0 });
@@ -1112,6 +1123,26 @@ export default function CashierOrders() {
     fetchStats();
   }, [fetchStats]);
 
+  // ── Auto-open order + payment modal from ?open=<id>[&pay=1] ───────────────
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const openId = params.get('open');
+    if (!openId) return;
+    const wantsPay = params.get('pay') === '1';
+    ordersAPI.getById(openId)
+      .then(full => {
+        if (!full?.id) return;
+        setAutoPay(wantsPay);
+        setSelected(full);
+      })
+      .catch(() => {})
+      .finally(() => {
+        // strip the query so a refresh or close does not re-trigger
+        navigate(location.pathname, { replace: true });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   // ── After payment ─────────────────────────────────────────────────────────
   const handlePaid = useCallback(async ({ order, payment }) => {
     setSelected(null);
@@ -1129,8 +1160,9 @@ export default function CashierOrders() {
           taxSettings={taxSettings}
           restSettings={restSettings}
           user={user}
-          onBack={() => setSelected(null)}
-          onPaid={handlePaid}
+          autoOpenPay={autoPay}
+          onBack={() => { setSelected(null); setAutoPay(false); }}
+          onPaid={(p) => { setAutoPay(false); handlePaid(p); }}
         />
         {receipt && (
           <ReceiptModal

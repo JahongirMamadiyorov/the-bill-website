@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from '../../context/LanguageContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApi, money, fmtDate } from '../../hooks/useApi';
-import { ordersAPI, menuAPI, tablesAPI, usersAPI } from '../../api/client';
+import { ordersAPI, menuAPI, tablesAPI, usersAPI, accountingAPI } from '../../api/client';
+import { usePrinter } from '../../hooks/usePrinter';
 import Dropdown from '../../components/Dropdown';
 import DatePicker from '../../components/DatePicker';
 import PhoneInput, { formatPhoneDisplay } from '../../components/PhoneInput';
@@ -72,6 +73,28 @@ export default function AdminOrders() {
   const [cancelOtherText, setCancelOtherText] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalOpenKey, setModalOpenKey] = useState(0);
+
+  // Receipt printing — same hook + style as cashier panel for parity
+  const { printReceipt } = usePrinter();
+  const [restSettings, setRestSettings] = useState({ restaurantName: '', receiptHeader: '' });
+  useEffect(() => {
+    accountingAPI.getRestaurantSettings()
+      .then(res => {
+        const s = res?.data || res || {};
+        setRestSettings({
+          restaurantName: s.restaurantName || s.restaurant_name || '',
+          receiptHeader:  s.receiptHeader  || s.receipt_header  || '',
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  // Match cashier's fmtOrderNum so printed headers look the same
+  const fmtOrderNum = (o) => {
+    if (o?.dailyNumber) return `#${o.dailyNumber}`;
+    const id = String(o?.id || '');
+    return id.length >= 4 ? `#${id.slice(-4)}` : `#${id}`;
+  };
 
   const openOrderModal = useCallback((order) => {
     setSelectedOrder(order);
@@ -1503,58 +1526,67 @@ export default function AdminOrders() {
           { key: 'loan',    label: t('paymentMethods.loan'),    Icon: User       },
         ];
 
+        // ── Print receipt — uses the SAME usePrinter() hook + CSS as the
+        //    cashier panel so admin and cashier print the identical bolder
+        //    receipt. ───────────────────────────────────────────────────────
         const handlePrintCheque = () => {
-          const w = window.open('', '_blank', 'width=380,height=700');
-          if (!w) return;
+          const restaurantName = restSettings?.restaurantName || t('common.brandRestaurant', 'The Bill Restaurant');
+          const dname =
+            paymentOrder.tableName
+              ? paymentOrder.tableName
+              : paymentOrder.tableId
+                ? `${t('admin.orders.tablePrefix','Table')} ${getTableNumber(paymentOrder.tableId)}`
+                : (paymentOrder.customerName || t('cashier.orders.walkIn','Walk-in'));
+
           const itemsHtml = orderItems.map(i => {
+            const p   = i.unitPrice || i.unit_price || i.price || 0;
             const qty = parseFloat(i.quantity) || 1;
-            const total = (i.unitPrice || i.unit_price || i.price || 0) * qty;
-            const u = String(i.unit || 'piece').toLowerCase();
-            const weighed = u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+            const u   = String(i.unit || 'piece').toLowerCase();
+            const weighed  = u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
             const qtyLabel = weighed
               ? `${Number.isInteger(qty) ? qty : parseFloat(qty.toFixed(3))} ${u}`
               : `× ${qty}`;
-            return `<div class="row"><span class="row-label">${i.name || i.itemName || 'Item'} ${qtyLabel}</span><span>${money(total)}</span></div>`;
+            return `<div class="row"><span class="row-label">${i.name || i.itemName || '—'} ${qtyLabel}</span><span>${money(p * qty)}</span></div>`;
           }).join('');
-          const css = `
-            @page { size: 80mm auto; margin: 3mm 0; }
-            html, body { margin: 0; padding: 0; background: #fff; }
-            body { font-family: 'Courier New', 'Menlo', monospace; font-size: 15px; line-height: 1.35; color: #000; width: 76mm; margin: 0 auto; padding: 3mm 2mm; box-sizing: border-box; }
-            .center { text-align: center; }
-            .rest-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.5px; }
-            .gray { color: #222; font-size: 13px; }
-            .dashed { border-top: 1px dashed #000; margin: 6px 0; }
-            .row { display: flex; justify-content: space-between; align-items: baseline; margin: 3px 0; word-break: break-word; }
-            .row-label { flex: 1; padding-right: 6px; }
-            .total-row { font-size: 20px; font-weight: 800; margin: 4px 0; }
-            .footer { margin-top: 10px; font-size: 13px; color: #222; text-align: center; }
-            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-          `;
-          const headerLine = `Order #${paymentOrder.dailyNumber || '—'}${paymentOrder.tableId ? ' · Table ' + getTableNumber(paymentOrder.tableId) : ''}`;
-          const discountBlock = discountAmt > 0
-            ? `<div class="row"><span>Subtotal</span><span>${money(orderTotal)}</span></div><div class="row"><span>Discount</span><span>-${money(discountAmt)}</span></div><div class="dashed"></div>`
-            : '';
-          const changeBlock = (pf.paymentMethod === 'cash' && change > 0)
-            ? `<div class="row"><span>Change</span><span>${money(change)}</span></div>`
-            : '';
-          w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title><style>${css}</style></head><body>
-            <div class="center"><div class="rest-name">Receipt</div>
-              <div class="gray">${headerLine}</div>
-              <div class="gray">${new Date().toLocaleString()}</div>
+
+          const receiptInner = `
+            <div class="center">
+              <div class="rest-name">${restaurantName}</div>
+              <div class="gray">${fmtOrderNum(paymentOrder)} &nbsp;·&nbsp; ${dname}</div>
+              <div class="gray">${fmtDate(new Date())}</div>
             </div>
             <div class="dashed"></div>
             ${itemsHtml}
             <div class="dashed"></div>
-            ${discountBlock}
-            <div class="row total-row"><span>Total</span><span>${money(totalToPay)}</span></div>
+            <div class="row"><span>${t('common.subtotal','Subtotal')}</span><span>${money(orderTotal)}</span></div>
+            ${discountAmt > 0 ? `<div class="row green"><span>${t('common.discount','Discount')}</span><span>−${money(discountAmt)}</span></div>` : ''}
             <div class="dashed"></div>
-            <div class="row"><span>Payment</span><span>${(pf.paymentMethod || 'cash').replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
-            ${changeBlock}
+            <div class="row total-row"><span>${t('cashier.orders.receiptTotal','Total')}</span><span>${money(totalToPay)}</span></div>
             <div class="dashed"></div>
-            <div class="footer">Thank you for dining with us!</div>
-          </body></html>`);
-          w.document.close();
-          setTimeout(() => { w.print(); }, 300);
+            <div class="row"><span>${t('cashier.orders.method','Payment')}</span><span>${(pf.paymentMethod || 'cash').replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
+            ${(pf.paymentMethod === 'cash' && change > 0) ? `<div class="row"><span>${t('cashier.orders.change','Change')}</span><span>${money(change)}</span></div>` : ''}
+            <div class="dashed"></div>
+            <div class="center footer">${restSettings?.receiptHeader || t('cashier.orders.thankYou','Thank you for dining with us!')}</div>`;
+
+          printReceipt({
+            restaurantName,
+            orderNum: fmtOrderNum(paymentOrder),
+            tableName: dname,
+            dateTime: fmtDate(new Date()),
+            items: orderItems.map(i => ({
+              name: i.name || i.itemName || '—',
+              qty:  parseFloat(i.quantity) || 1,
+              unit: String(i.unit || 'piece').toLowerCase(),
+              total: money((i.unitPrice || i.unit_price || i.price || 0) * (parseFloat(i.quantity) || 1)),
+            })),
+            subtotal: money(orderTotal),
+            discount: discountAmt > 0 ? `-${money(discountAmt)}` : undefined,
+            total:    money(totalToPay),
+            method:   (pf.paymentMethod || 'cash').replace('_',' ').replace(/\b\w/g, c => c.toUpperCase()),
+            change:   change > 0 ? money(change) : undefined,
+            footer:   restSettings?.receiptHeader || t('cashier.orders.thankYou','Thank you for dining with us!'),
+            browserHtml: receiptInner,
+          });
         };
 
         return (
