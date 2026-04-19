@@ -404,6 +404,7 @@
       "sectionsWithTablesHint": "Stollar mavjud bo'limlarni o'chirib bo'lmaydi.",
       "removeSection": "Bo'limni o'chirish",
       "cannotRemoveSection": "O'chirib bo'lmaydi -- bo'limda stollar bor",
+      "renameSection": "Bo'lim nomini o'zgartirish",
       "orderNumber": "Buyurtma #{number}",
       "itemsCount": "{count} ta taom",
       "startNewOrderHint": "Stol kartasidan yangi buyurtma boshlang",

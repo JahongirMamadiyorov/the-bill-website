@@ -635,7 +635,7 @@ export default function AdminOrders() {
                   <div className="px-4 pb-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">
-                        {(order.items || []).reduce((s, i) => s + (i.quantity || 1), 0)} items
+                        {Math.round((order.items || []).reduce((s, i) => s + (Number(i.quantity) || 1), 0))} {t('common.items')}
                       </span>
                       <span className="text-base font-bold text-green-600">{money(order.totalAmount || 0)}</span>
                     </div>
@@ -769,7 +769,7 @@ export default function AdminOrders() {
                   <tbody className="divide-y divide-gray-100">
                     {filteredPaidOrders.map((order) => {
                       const items = Array.isArray(order.items) ? order.items : [];
-                      const itemCount = items.reduce((s, i) => s + (i.quantity || 1), 0);
+                      const itemCount = Math.round(items.reduce((s, i) => s + (Number(i.quantity) || 1), 0));
                       const isLoan = order.paymentMethod === 'loan';
                       const loanPaid = order.loanStatus === 'paid';
                       return (
@@ -1632,7 +1632,7 @@ export default function AdminOrders() {
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('common.items')}</p>
-                        <span className="text-xs font-semibold text-blue-600">{orderItems.reduce((s, i) => s + (i.quantity || 1), 0)} items</span>
+                        <span className="text-xs font-semibold text-blue-600">{Math.round(orderItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0))} {t('common.items')}</span>
                       </div>
                       <div className="divide-y divide-gray-50">
                         {orderItems.length === 0 ? (

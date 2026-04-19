@@ -320,7 +320,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
 
   // ── Order items ───────────────────────────────────────────────────────────
   const items = full?.items || full?.orderItems || [];
-  const orderTotal = order.totalAmount || items.reduce((s, x) => s + (x.unitPrice || x.price || 0) * (x.quantity || x.qty || 1), 0);
+  const orderTotal = Number(order.totalAmount) || items.reduce((s, x) => s + (Number(x.unitPrice) || Number(x.price) || 0) * (Number(x.quantity) || Number(x.qty) || 1), 0);
 
   // ── Payment helpers ───────────────────────────────────────────────────────
   const getDiscountAmt = (pf) => {
@@ -871,7 +871,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('cashier.orders.orderItems')}</p>
                       <span className="text-xs font-semibold" style={{ color: C }}>
-                        {orderItems.reduce((s, i) => s + (i.quantity || i.qty || 1), 0)} {t('common.items')}
+                        {Math.round(orderItems.reduce((s, i) => s + (Number(i.quantity) || Number(i.qty) || 1), 0))} {t('common.items')}
                       </span>
                     </div>
                     <div className="divide-y divide-gray-50">
@@ -884,7 +884,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                             <p className="text-xs text-gray-400">{money(item.unitPrice || item.price || 0)} × {item.quantity || item.qty || 1}</p>
                           </div>
                           <span className="text-sm font-semibold text-gray-900 ml-3">
-                            {money((item.unitPrice || item.price || 0) * (item.quantity || item.qty || 1))}
+                            {money((Number(item.unitPrice) || Number(item.price) || 0) * (Number(item.quantity) || Number(item.qty) || 1))}
                           </span>
                         </div>
                       ))}

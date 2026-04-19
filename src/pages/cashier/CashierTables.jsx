@@ -137,7 +137,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
   }, [order?.id]);
 
   const items = fullOrder?.items || fullOrder?.orderItems || order.items || [];
-  const subtotal = items.reduce((s, i) => s + (parseFloat(i.unitPrice || 0) * (i.quantity || 1)), 0) || parseFloat(order.totalAmount || 0);
+  const subtotal = items.reduce((s, i) => s + (parseFloat(i.unitPrice || 0) * (Number(i.quantity) || 1)), 0) || parseFloat(order.totalAmount || 0);
   const taxRate = taxSettings?.taxEnabled ? (parseFloat(taxSettings?.taxRate) || 0) / 100 : 0;
   const taxInclusive = taxSettings?.taxInclusive;
   const svcRate = restSettings?.serviceChargeEnabled ? (parseFloat(restSettings?.serviceChargeRate) || 0) / 100 : 0;
@@ -495,7 +495,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
   const isReserved = table.status === 'reserved';
   const billRequested = order?.status === 'bill_requested';
   const items = order?.items || [];
-  const subtotal = items.reduce((s, i) => s + (parseFloat(i.unitPrice || 0) * (i.quantity || 1)), 0) || parseFloat(order?.totalAmount || 0);
+  const subtotal = items.reduce((s, i) => s + (parseFloat(i.unitPrice || 0) * (Number(i.quantity) || 1)), 0) || parseFloat(order?.totalAmount || 0);
 
   const handleCancelReservation = async () => {
     setCancelling(true);
@@ -566,7 +566,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                         <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                           <span className="text-sm text-gray-500">×{item.quantity}</span>
                           <span className="text-sm font-semibold" style={{ color: '#0891B2' }}>
-                            {money((parseFloat(item.unitPrice || 0)) * (item.quantity || 1))}
+                            {money((parseFloat(item.unitPrice || 0)) * (Number(item.quantity) || 1))}
                           </span>
                         </div>
                       </div>

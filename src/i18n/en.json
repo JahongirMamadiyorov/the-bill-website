@@ -404,6 +404,7 @@
       "sectionsWithTablesHint": "Sections with tables cannot be removed.",
       "removeSection": "Remove section",
       "cannotRemoveSection": "Cannot remove -- section has tables",
+      "renameSection": "Rename section",
       "orderNumber": "Order #{number}",
       "itemsCount": "{count} items",
       "startNewOrderHint": "Start a new order from the table card",

@@ -8,7 +8,7 @@ import {
   Plus, Minus, Trash2, X, Grid3X3, Users, AlertTriangle, RefreshCw,
   Settings, CheckCircle2, Clock, AlertCircle, Sparkles, ClipboardList,
   CalendarCheck, ChevronRight, User, Phone, Calendar, UserCheck,
-  XCircle, Timer, Receipt, UtensilsCrossed, ArrowLeft,
+  XCircle, Timer, Receipt, UtensilsCrossed, ArrowLeft, Pencil, Check,
 } from 'lucide-react';
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -122,6 +122,9 @@ export default function AdminTables() {
   const [activeFilter,    setActiveFilter]    = useState('all');
   const [allSections,     setAllSections]     = useState(DEFAULT_SECTIONS);
   const [newSectionInput, setNewSectionInput] = useState('');
+  const [editingSection,  setEditingSection]  = useState(null); // current section name being renamed
+  const [editingInput,    setEditingInput]    = useState('');
+  const [renameSaving,    setRenameSaving]    = useState(false);
 
   // modals / sheets
   const [modal,           setModal]           = useState(null); // 'add'|'edit'|'sections'|'reserve'
@@ -162,6 +165,9 @@ export default function AdminTables() {
   // window before the backend reflects the write.
   const pendingSectionDeletesRef = useRef(new Map()); // name(lc) -> expiresAt
   const pendingSectionAddsRef    = useRef(new Map()); // name(lc) -> expiresAt
+  // For renames we track BOTH names: the old (lc) we want suppressed from polled
+  // results, and the new (lc) we want kept even if the GET hasn't caught up.
+  const pendingSectionRenamesRef = useRef(new Map()); // oldLc -> { newName, expiresAt }
   const PENDING_TTL_MS = 8000;
 
   // tick state — increments every second to keep elapsed timers live
@@ -182,8 +188,12 @@ export default function AdminTables() {
       for (const m of [pendingSectionDeletesRef.current, pendingSectionAddsRef.current]) {
         for (const [k, exp] of m) if (exp < now) m.delete(k);
       }
-      const pendingDel = pendingSectionDeletesRef.current;
-      const pendingAdd = pendingSectionAddsRef.current;
+      for (const [k, v] of pendingSectionRenamesRef.current) {
+        if ((v?.expiresAt || 0) < now) pendingSectionRenamesRef.current.delete(k);
+      }
+      const pendingDel    = pendingSectionDeletesRef.current;
+      const pendingAdd    = pendingSectionAddsRef.current;
+      const pendingRename = pendingSectionRenamesRef.current;
 
       // Use functional updater so we don't need to close over `allSections`.
       // Closing over it would make this callback change identity every poll
@@ -195,6 +205,7 @@ export default function AdminTables() {
         for (const name of data) {
           const lc = String(name).toLowerCase();
           if (pendingDel.has(lc)) continue; // user just removed this
+          if (pendingRename.has(lc)) continue; // user just renamed this — suppress old name
           if (seen.has(lc)) continue;
           seen.add(lc);
           merged.push(name);
@@ -205,6 +216,14 @@ export default function AdminTables() {
             const fromState = prev.find(s => s.toLowerCase() === lc);
             merged.push(fromState || lc);
             seen.add(lc);
+          }
+        }
+        // Re-add any pending rename targets the server hasn't surfaced yet.
+        for (const [_oldLc, info] of pendingRename) {
+          const newLc = String(info?.newName || '').toLowerCase();
+          if (newLc && !seen.has(newLc)) {
+            merged.push(info.newName);
+            seen.add(newLc);
           }
         }
         // Skip state update if identical to avoid a re-render blink.
@@ -612,6 +631,84 @@ export default function AdminTables() {
       // Persist failed — drop the shield so the poll can reset state.
       pendingSectionDeletesRef.current.delete(lc);
       fetchSections();
+    }
+  };
+
+  const beginRenameSection = (sec) => {
+    setEditingSection(sec);
+    setEditingInput(sec);
+  };
+
+  const cancelRenameSection = () => {
+    setEditingSection(null);
+    setEditingInput('');
+    setRenameSaving(false);
+  };
+
+  const handleRenameSection = async (oldName) => {
+    const newName = editingInput.trim();
+    if (!newName) return;
+    if (newName.length > 80) return;
+    if (newName.toLowerCase() === oldName.toLowerCase()) {
+      // No change — just exit editing mode.
+      cancelRenameSection();
+      return;
+    }
+    // Block clashes with another existing section (case-insensitive).
+    const clash = allSections.some(
+      s => s.toLowerCase() === newName.toLowerCase() && s.toLowerCase() !== oldName.toLowerCase()
+    );
+    if (clash) return;
+
+    const oldLc = oldName.toLowerCase();
+    setRenameSaving(true);
+
+    // Optimistic UI: replace old name with new in-place.
+    setAllSections(prev => prev.map(s => (s.toLowerCase() === oldLc ? newName : s)));
+
+    // Mirror the rename onto local table rows so the chip count and filter
+    // pill keep working until the next /tables poll.
+    setTables(prev => prev.map(t => {
+      const sec = (t.section || '').toLowerCase();
+      if (sec === oldLc) return { ...t, section: newName };
+      return t;
+    }));
+
+    // Keep the active filter in sync if it pointed at the old name.
+    if (activeFilter.toLowerCase() === oldLc) setActiveFilter(newName);
+
+    // Shield the next polls from resurrecting the old name or hiding the new one.
+    pendingSectionRenamesRef.current.set(oldLc, {
+      newName,
+      expiresAt: Date.now() + PENDING_TTL_MS,
+    });
+    pendingSectionDeletesRef.current.set(oldLc, Date.now() + PENDING_TTL_MS);
+    pendingSectionAddsRef.current.set(newName.toLowerCase(), Date.now() + PENDING_TTL_MS);
+
+    try {
+      await call(tablesAPI.renameSection, oldName, newName);
+      // Confirmed — drop shields slightly early so future polls reflect truth.
+      pendingSectionRenamesRef.current.delete(oldLc);
+      pendingSectionDeletesRef.current.delete(oldLc);
+      pendingSectionAddsRef.current.delete(newName.toLowerCase());
+      // Refresh tables/sections so anything we missed comes through cleanly.
+      fetchSections();
+      fetchTables(true);
+    } catch (_) {
+      // Roll back on failure.
+      pendingSectionRenamesRef.current.delete(oldLc);
+      pendingSectionDeletesRef.current.delete(oldLc);
+      pendingSectionAddsRef.current.delete(newName.toLowerCase());
+      setAllSections(prev => prev.map(s => (s.toLowerCase() === newName.toLowerCase() ? oldName : s)));
+      setTables(prev => prev.map(t => {
+        const sec = (t.section || '').toLowerCase();
+        if (sec === newName.toLowerCase()) return { ...t, section: oldName };
+        return t;
+      }));
+      if (activeFilter.toLowerCase() === newName.toLowerCase()) setActiveFilter(oldName);
+      fetchSections();
+    } finally {
+      cancelRenameSection();
     }
   };
 
@@ -1413,26 +1510,72 @@ export default function AdminTables() {
                   {allSections.map((sec) => {
                     const count = tables.filter(t => getSection(t).toLowerCase() === sec.toLowerCase()).length;
                     const canDelete = count === 0;
+                    const isEditing = editingSection === sec;
                     return (
                       <div key={sec} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div className={`w-1 self-stretch rounded-full ${sectionBarColor(sec)}`} />
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold ${sectionInitialBg(sec)}`}>
-                          {sec.charAt(0).toUpperCase()}
+                          {(isEditing ? (editingInput.trim() || sec) : sec).charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-800 text-sm">{sec}</p>
-                          <p className="text-xs text-gray-500">{t('admin.tables.tableCountLabel', { count })}</p>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteSection(sec)}
-                          disabled={!canDelete}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                            canDelete ? 'bg-red-100 hover:bg-red-200 text-red-500' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                          }`}
-                          title={canDelete ? t('admin.tables.removeSection') : t('admin.tables.cannotRemoveSection')}
-                        >
-                          <X size={14} />
-                        </button>
+                        {isEditing ? (
+                          <>
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={editingInput}
+                                maxLength={80}
+                                onChange={(e) => setEditingInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleRenameSection(sec);
+                                  else if (e.key === 'Escape') cancelRenameSection();
+                                }}
+                                className="w-full px-3 py-2 text-sm font-semibold text-gray-800 bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                placeholder={sec}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">{t('admin.tables.tableCountLabel', { count })}</p>
+                            </div>
+                            <button
+                              onClick={() => handleRenameSection(sec)}
+                              disabled={renameSaving || !editingInput.trim() || editingInput.trim().toLowerCase() === sec.toLowerCase() || allSections.some(s => s.toLowerCase() === editingInput.trim().toLowerCase() && s.toLowerCase() !== sec.toLowerCase())}
+                              className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-600 disabled:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                              title={t('common.save')}
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              onClick={cancelRenameSection}
+                              className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors"
+                              title={t('common.cancel')}
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-800 text-sm">{sec}</p>
+                              <p className="text-xs text-gray-500">{t('admin.tables.tableCountLabel', { count })}</p>
+                            </div>
+                            <button
+                              onClick={() => beginRenameSection(sec)}
+                              className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
+                              title={t('admin.tables.renameSection')}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSection(sec)}
+                              disabled={!canDelete}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                                canDelete ? 'bg-red-100 hover:bg-red-200 text-red-500' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                              }`}
+                              title={canDelete ? t('admin.tables.removeSection') : t('admin.tables.cannotRemoveSection')}
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     );
                   })}

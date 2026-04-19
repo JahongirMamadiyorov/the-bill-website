@@ -415,105 +415,11 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
     </div>
   );
 
-  const MenuPanel = ({ fullHeight = false }) => (
-    <div className={`flex flex-col ${fullHeight ? 'h-full' : ''}`}>
-      {/* Category pills */}
-      <div className="px-4 pb-3 pt-1 flex-shrink-0">
-        <div
-          className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
-          style={{ overscrollBehaviorX: 'contain' }}
-          onWheel={(e) => {
-            if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-              e.currentTarget.scrollLeft += e.deltaY;
-            }
-          }}
-        >
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCat(cat.id)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                selectedCat === cat.id
-                  ? 'text-white'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
-              }`}
-              style={selectedCat === cat.id ? { backgroundColor: PRIMARY } : {}}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </div>
-      {/* Items */}
-      <div className={`px-4 flex flex-col gap-2 ${fullHeight ? 'overflow-y-auto flex-1 pb-4' : 'pb-32'}`}>
-        {filteredItems.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">{t('admin.newOrder.noItemsInCategory')}</div>
-        )}
-        {filteredItems.map(item => {
-          const qty = cart[item.id]?.qty || 0;
-          const avail = item.isAvailable !== false;
-          return (
-            <div
-              key={item.id}
-              className={`rounded-xl px-4 py-3 flex items-center justify-between shadow-sm border ${
-                avail ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-200 opacity-60'
-              }`}
-            >
-              <div className="flex-1 min-w-0 mr-3">
-                <p className={`font-semibold text-sm truncate ${avail ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</p>
-                <p className={`text-sm mt-0.5 ${avail ? 'text-gray-400' : 'text-gray-300'}`}>
-                  {formatPrice(item.price)}{isWeighedItem(item) ? ` / ${unitSuffix(item)}` : ''}
-                </p>
-                {!avail && <p className="text-[10px] font-bold text-red-500 mt-0.5">{t("admin.menu.inactive")}</p>}
-              </div>
-              {avail ? (
-                qty === 0 ? (
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-                    style={{ backgroundColor: PRIMARY }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
-                  >
-                    <Plus size={16} className="text-white" />
-                  </button>
-                ) : isWeighedItem(item) ? (
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="px-3 h-8 rounded-full flex items-center gap-1 text-xs font-bold text-white"
-                    style={{ backgroundColor: PRIMARY }}
-                  >
-                    {formatQty(item, qty)}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => removeFromCart(item)}
-                      className="w-7 h-7 rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                    >
-                      <Minus size={12} className="text-gray-600" />
-                    </button>
-                    <span className="text-sm font-bold text-gray-900 w-4 text-center">{qty}</span>
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                      style={{ backgroundColor: PRIMARY }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
-                    >
-                      <Plus size={12} className="text-white" />
-                    </button>
-                  </div>
-                )
-              ) : (
-                <span className="px-2 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-md">{t("admin.newOrder.off")}</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  // NOTE: The menu panel JSX used to live here as a `const MenuPanel = (...)`
+  // nested component. Because it was re-created on every render, React
+  // unmounted the scroll container every time the cart changed and the menu
+  // snapped back to the top. The JSX is now inlined at the single call site
+  // in the modal's right pane — see below.
 
   const TablePickerModal = () => (
     showTablePicker ? (
@@ -693,12 +599,115 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               </div>
             </div>
 
-            {/* RIGHT panel — menu */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            {/* RIGHT panel — menu.
+                NOTE: We inline the menu JSX here instead of rendering
+                <MenuPanel /> as a nested component. Defining MenuPanel
+                inside AdminNewOrder gave it a new function identity on
+                every render, which unmounted and remounted the scroll
+                container on every cart change and snapped the menu back
+                to the top. Inline JSX keeps the same <div> nodes across
+                re-renders, so the scroll position is preserved. */}
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
               <div className="px-4 pt-4 pb-0 flex-shrink-0">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t("admin.newOrder.menuLabel")}</p>
               </div>
-              <MenuPanel fullHeight />
+
+              {/* Category pills (horizontal scroll, wheel-to-scroll) */}
+              <div className="px-4 pb-3 pt-1 flex-shrink-0">
+                <div
+                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                  style={{ overscrollBehaviorX: 'contain' }}
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                      e.currentTarget.scrollLeft += e.deltaY;
+                    }
+                  }}
+                >
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCat(cat.id)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                        selectedCat === cat.id
+                          ? 'text-white'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
+                      }`}
+                      style={selectedCat === cat.id ? { backgroundColor: PRIMARY } : {}}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Items (vertical scroll) */}
+              <div className="px-4 flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 pb-4">
+                {filteredItems.length === 0 && (
+                  <div className="text-center py-10 text-gray-400 text-sm">{t('admin.newOrder.noItemsInCategory')}</div>
+                )}
+                {filteredItems.map(item => {
+                  const qty = cart[item.id]?.qty || 0;
+                  const avail = item.isAvailable !== false;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl px-4 py-3 flex items-center justify-between shadow-sm border ${
+                        avail ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-200 opacity-60'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0 mr-3">
+                        <p className={`font-semibold text-sm truncate ${avail ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</p>
+                        <p className={`text-sm mt-0.5 ${avail ? 'text-gray-400' : 'text-gray-300'}`}>
+                          {formatPrice(item.price)}{isWeighedItem(item) ? ` / ${unitSuffix(item)}` : ''}
+                        </p>
+                        {!avail && <p className="text-[10px] font-bold text-red-500 mt-0.5">{t("admin.menu.inactive")}</p>}
+                      </div>
+                      {avail ? (
+                        qty === 0 ? (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                            style={{ backgroundColor: PRIMARY }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
+                          >
+                            <Plus size={16} className="text-white" />
+                          </button>
+                        ) : isWeighedItem(item) ? (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="px-3 h-8 rounded-full flex items-center gap-1 text-xs font-bold text-white"
+                            style={{ backgroundColor: PRIMARY }}
+                          >
+                            {formatQty(item, qty)}
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => removeFromCart(item)}
+                              className="w-7 h-7 rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                            >
+                              <Minus size={12} className="text-gray-600" />
+                            </button>
+                            <span className="text-sm font-bold text-gray-900 w-4 text-center">{qty}</span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                              style={{ backgroundColor: PRIMARY }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
+                            >
+                              <Plus size={12} className="text-white" />
+                            </button>
+                          </div>
+                        )
+                      ) : (
+                        <span className="px-2 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-md">{t("admin.newOrder.off")}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
