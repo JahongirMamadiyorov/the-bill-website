@@ -14,12 +14,12 @@ import { money } from '../../hooks/useApi';
 import { useTranslation } from '../../context/LanguageContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const elapsed = (iso) => {
+const elapsed = (iso, t) => {
   if (!iso) return '';
   const m = Math.floor((Date.now() - new Date(iso)) / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
+  if (m < 1) return t('time.justNow');
+  if (m < 60) return t('time.minAgo', { count: m });
+  return t('time.hoursAgo', { h: Math.floor(m / 60), m: m % 60 });
 };
 
 const fmtOrderNum = (order) => {
@@ -44,9 +44,8 @@ const TABLE_STATUS = {
 };
 
 // ── LoanDatePicker (mini calendar for due date) ──────────────────────────────
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_HDRS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
 function LoanDatePicker({ value, onChange, onClose }) {
+  const { t } = useTranslation();
   const todayD = new Date();
   const [viewYear, setViewYear] = useState(todayD.getFullYear());
   const [viewMonth, setViewMonth] = useState(todayD.getMonth());
@@ -70,11 +69,11 @@ function LoanDatePicker({ value, onChange, onClose }) {
     <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-72" style={{ bottom: '100%', marginBottom: 8 }}>
       <div className="flex items-center justify-between mb-3">
         <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded text-gray-600 font-bold">‹</button>
-        <span className="text-sm font-semibold text-gray-800">{MONTH_NAMES[viewMonth]} {viewYear}</span>
+        <span className="text-sm font-semibold text-gray-800">{t('datePicker.months')[viewMonth]} {viewYear}</span>
         <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded text-gray-600 font-bold">›</button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 mb-1">
-        {DAY_HDRS.map(d => (
+        {t('datePicker.days').map(d => (
           <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
         ))}
       </div>
@@ -106,7 +105,8 @@ function LoanDatePicker({ value, onChange, onClose }) {
 }
 
 // ── Payment Panel (within TableDetail) ───────────────────────────────────────
-const PAY_METHODS = ['Cash', 'Card', 'QR Code', 'Loan'];
+const PAY_METHOD_KEYS = ['Cash', 'Card', 'QR Code', 'Loan'];
+const PAY_METHOD_TKEYS = { 'Cash': 'paymentMethods.cash', 'Card': 'paymentMethods.card', 'QR Code': 'paymentMethods.qrCode', 'Loan': 'paymentMethods.loan' };
 
 function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
   const { t } = useTranslation();
@@ -170,7 +170,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
       });
       onPaid();
     } catch (e) {
-      setErr(e?.error || e?.message || 'Payment failed');
+      setErr(e?.error || e?.message || t('cashier.tables.paymentFailed'));
     } finally {
       setPaying(false);
     }
@@ -201,7 +201,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
           </div>
           {taxAmt > 0 && (
             <div className="flex justify-between text-gray-600">
-              <span>{taxSettings?.taxName || 'Tax'} ({taxSettings?.taxRate}%{taxInclusive?' incl':''})</span>
+              <span>{taxSettings?.taxName || t('cashier.orders.tax')} ({taxSettings?.taxRate}%{taxInclusive?' incl':''})</span>
               <span className="font-medium text-gray-900">{money(taxAmt)}</span>
             </div>
           )}
@@ -243,7 +243,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('cashier.orders.paymentMethod')}</p>
           <div className="grid grid-cols-2 gap-2">
-            {PAY_METHODS.map(m => (
+            {PAY_METHOD_KEYS.map(m => (
               <button
                 key={m}
                 onClick={() => { setMethod(m); setCardOk(false); setQrOk(false); setCashGiven(''); }}
@@ -253,7 +253,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
                   : { backgroundColor: '#fff', color: '#374151', borderColor: '#E5E7EB' }
                 }
               >
-                {methodIcons[m]}{m}
+                {methodIcons[m]}{t(PAY_METHOD_TKEYS[m])}
               </button>
             ))}
           </div>
@@ -366,7 +366,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
         {/* Print Check */}
         <button
           onClick={() => {
-            const restName   = restSettings?.restaurantName || 'The Bill Restaurant';
+            const restName   = restSettings?.restaurantName || t('common.brandRestaurant', 'The Bill Restaurant');
             const orderLabel = fmtOrderNum(order);
             const tableName  = order.tableName || order.customerName || 'Table';
             const receiptInner = `
@@ -383,16 +383,16 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
               }).join('')}
               <div class="dashed"></div>
               <div class="row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
-              ${taxAmt > 0 ? `<div class="row"><span>${taxSettings?.taxName || 'Tax'} (${taxSettings?.taxRate}%)</span><span>${money(taxAmt)}</span></div>` : ''}
+              ${taxAmt > 0 ? `<div class="row"><span>${taxSettings?.taxName || t('cashier.orders.tax')} (${taxSettings?.taxRate}%)</span><span>${money(taxAmt)}</span></div>` : ''}
               ${svcAmt > 0 ? `<div class="row"><span>Service (${restSettings?.serviceChargeRate}%)</span><span>${money(svcAmt)}</span></div>` : ''}
               ${discAmt > 0 ? `<div class="row green"><span>Discount (${discPct}%)</span><span>−${money(discAmt)}</span></div>` : ''}
               <div class="dashed"></div>
               <div class="row total-row"><span>TOTAL</span><span>${money(total)}</span></div>
               <div class="dashed"></div>
               <div class="row"><span>Method</span><span>${method}</span></div>
-              ${method === 'Cash' && change > 0 ? `<div class="row"><span>Change</span><span>${money(change)}</span></div>` : ''}
+              ${method === 'Cash' && change > 0 ? `<div class="row"><span>${t('cashier.orders.change')}</span><span>${money(change)}</span></div>` : ''}
               <div class="dashed"></div>
-              <div class="center footer">${restSettings?.receiptHeader || 'Thank you for dining with us!'}</div>`;
+              <div class="center footer">${restSettings?.receiptHeader || t('receipt.thankYou', 'Thank you for dining with us!')}</div>`;
             printReceipt({
               restaurantName: restName,
               orderNum: orderLabel,
@@ -412,7 +412,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
               total: money(total),
               method,
               change: method === 'Cash' && change > 0 ? money(change) : undefined,
-              footer: restSettings?.receiptHeader || 'Thank you for dining with us!',
+              footer: restSettings?.receiptHeader || t('receipt.thankYou', 'Thank you for dining with us!'),
               browserHtml: receiptInner,
             });
           }}
@@ -430,7 +430,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
             <Printer className="w-3 h-3" />
             {printerIp
               ? <span style={{ color: '#374151', fontWeight: 500 }}>{printerIp}</span>
-              : <span>No printer IP — using browser print</span>}
+              : <span>{t('cashier.tables.noPrinterBrowser')}</span>}
           </span>
           <button
             onClick={() => { setShowPrinterCfg(v => !v); setPrinterIpDraft(printerIp); }}
@@ -447,7 +447,7 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
               value={printerIpDraft}
               onChange={e => setPrinterIpDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { setPrinterIp(printerIpDraft.trim()); setShowPrinterCfg(false); } }}
-              placeholder="192.168.1.100"
+              placeholder={t('placeholders.ipAddress', '192.168.1.100')}
               className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none"
               autoFocus
             />
@@ -535,7 +535,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: t('common.order'), value: fmtOrderNum(order) },
-                    { label: t('admin.tables.time'), value: elapsed(order.createdAt) || '—' },
+                    { label: t('admin.tables.time'), value: elapsed(order.createdAt, t) || '—' },
                     { label: t('admin.newOrder.guests'), value: order.guestCount ? `${order.guestCount} ${t('admin.tables.people')}` : '—' },
                     { label: t('roles.waitress'), value: order.waitressName || t('roles.cashier') },
                   ].map(({ label, value }) => (
@@ -577,7 +577,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                 {/* Actions */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => navigate('/cashier/new-order', { state: { orderId: order.id, tableId: table.id } })}
+                    onClick={() => navigate('/cashier/new-order', { state: { existingOrderId: order.id, existingOrder: order, table } })}
                     className="flex-1 py-3 rounded-xl border-2 font-semibold text-sm flex items-center justify-center gap-2 transition"
                     style={{ borderColor: '#0891B2', color: '#0891B2' }}
                   >
@@ -662,7 +662,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                 {/* Actions */}
                 <div className="pt-2">
                   <button
-                    onClick={() => navigate('/cashier/new-order', { state: { tableId: table.id } })}
+                    onClick={() => navigate('/cashier/new-order', { state: { table } })}
                     className="w-full py-3.5 rounded-xl text-white font-bold flex items-center justify-center gap-2 transition"
                     style={{ backgroundColor: '#0891B2' }}
                   >
@@ -680,7 +680,7 @@ function TableDetailPanel({ table, order, taxSettings, restSettings, onClose, on
                 <p className="font-semibold text-gray-700 mb-1">{t('admin.tables.noActiveOrderFound')}</p>
                 <p className="text-sm text-gray-500 mb-6">{t('admin.orders.newOrder')}</p>
                 <button
-                  onClick={() => navigate('/cashier/new-order', { state: { tableId: table.id } })}
+                  onClick={() => navigate('/cashier/new-order', { state: { table } })}
                   className="px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2 transition"
                   style={{ backgroundColor: '#0891B2' }}
                 >
@@ -779,7 +779,7 @@ export default function CashierTables() {
   }
 
   // Group tables by section
-  const sections = [...new Set(enrichedTables.map(t => t.section || 'Main Floor'))];
+  const sections = [...new Set(enrichedTables.map(t => t.section || t('cashier.tables.mainFloor')))];
   const reserved = enrichedTables.filter(t => t.status === 'reserved').length;
   const totalTables = enrichedTables.length;
 
@@ -798,7 +798,7 @@ export default function CashierTables() {
               <h1 className="text-xl font-extrabold text-gray-900">{t('cashier.tables.title')}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-xs text-gray-500">{totalTables} tables · live updates</p>
+                <p className="text-xs text-gray-500">{totalTables} {t('cashier.tables.liveUpdates')}</p>
               </div>
             </div>
           </div>
@@ -870,7 +870,7 @@ export default function CashierTables() {
           ) : (
             <div className="space-y-6">
               {sections.map(section => {
-                const sectionTables = enrichedTables.filter(t => (t.section || 'Main Floor') === section);
+                const sectionTables = enrichedTables.filter(t => (t.section || t('cashier.tables.mainFloor')) === section);
                 return (
                   <div key={section}>
                     {/* Section header */}
@@ -932,7 +932,7 @@ export default function CashierTables() {
                             <div className="px-4 pt-4 pb-1 flex-shrink-0">
                               <p className="text-xs uppercase tracking-wider font-semibold mb-0.5"
                                 style={{ color: cfg.color, opacity: 0.65 }}>
-                                {table.section || 'Indoor'}
+                                {table.section || t('cashier.tables.indoor')}
                               </p>
                               <p className="text-xl font-extrabold leading-tight" style={{ color: cfg.color }}>
                                 {table.name || `Table ${table.tableNumber}`}
@@ -969,7 +969,7 @@ export default function CashierTables() {
                                     <span className="text-xs font-medium flex items-center gap-1"
                                       style={{ color: cfg.color, opacity: 0.75 }}>
                                       <Clock className="w-3 h-3" />
-                                      {elapsed(table.order.createdAt)}
+                                      {elapsed(table.order.createdAt, t)}
                                     </span>
                                     <span className="text-xs font-extrabold" style={{ color: cfg.color }}>
                                       {money(parseFloat(table.order.totalAmount || 0))}

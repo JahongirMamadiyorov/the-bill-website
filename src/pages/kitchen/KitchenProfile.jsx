@@ -102,7 +102,7 @@ const KitchenProfile = () => {
                 {user?.name?.charAt(0).toUpperCase() || 'K'}
               </span>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 text-center">{user?.name || 'Kitchen Staff'}</h2>
+            <h2 className="text-lg font-bold text-gray-900 text-center">{user?.name || t('roles.kitchenStaff', 'Kitchen Staff')}</h2>
             <p className="text-sm text-gray-600 text-center mt-2 flex items-center justify-center gap-1">
               <ChefHat className="w-4 h-4" style={{ color: '#EA580C' }} />
               {t('kitchen.profile.title')}
@@ -114,7 +114,7 @@ const KitchenProfile = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">{t('common.email')}</p>
-                <p className="text-sm font-medium text-gray-900">{user?.email || 'Not provided'}</p>
+                <p className="text-sm font-medium text-gray-900">{user?.email || t('common.notProvided', 'Not provided')}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">{t('kitchen.profile.station')}</p>
@@ -190,7 +190,7 @@ const KitchenProfile = () => {
             </div>
             <div>
               <p className="text-gray-600 text-sm font-medium mb-2">{t('common.role')}</p>
-              <p className="text-lg font-semibold text-gray-900">{user?.expertise || 'All-purpose'}</p>
+              <p className="text-lg font-semibold text-gray-900">{user?.expertise || t('common.allPurpose', 'All-purpose')}</p>
             </div>
             <div>
               <p className="text-gray-600 text-sm font-medium mb-2">{t('admin.profile.memberSince')}</p>

@@ -86,7 +86,7 @@ export default function AdminProfile() {
       showToast(t('admin.profile.profileUpdated'));
       setModal(null);
     } catch (e) {
-      setDialog({ title: 'Error', message: e?.error || e?.response?.data?.error || 'Failed to update profile.', type: 'error' });
+      setDialog({ title: t('common.error', 'Error'), message: e?.error || e?.response?.data?.error || t('alerts.failedUpdateProfile', 'Failed to update profile.'), type: 'error' });
     } finally { setSaving(false); }
   };
 
@@ -107,7 +107,7 @@ export default function AdminProfile() {
       showToast(t('admin.profile.passwordChanged'));
       setModal(null);
     } catch (e) {
-      setDialog({ title: 'Error', message: e?.error || e?.response?.data?.error || 'Failed to change password.', type: 'error' });
+      setDialog({ title: t('common.error', 'Error'), message: e?.error || e?.response?.data?.error || t('alerts.failedChangePassword', 'Failed to change password.'), type: 'error' });
     } finally { setSaving(false); }
   };
 
@@ -231,7 +231,7 @@ export default function AdminProfile() {
       {modal === 'editProfile' && (
         <ModalWrapper title={t('admin.profile.editProfile')} onClose={() => setModal(null)}>
           <div className="space-y-4">
-            <FormField label={t('admin.profile.fullName')} value={profileForm.name} onChange={v => setProfileForm({ ...profileForm, name: v })} placeholder="Your name" />
+            <FormField label={t('admin.profile.fullName')} value={profileForm.name} onChange={v => setProfileForm({ ...profileForm, name: v })} placeholder={t('placeholders.yourName', 'Your name')} />
             <PhoneInput label={t('admin.profile.phoneNumber')} value={profileForm.phone} onChange={v => setProfileForm({ ...profileForm, phone: v })} />
             <FormField label={t('common.email')} value={profileForm.email} disabled note="Email cannot be changed here" />
           </div>

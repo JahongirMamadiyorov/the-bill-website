@@ -182,15 +182,15 @@ export default function OwnerStaff() {
                           {perf && (
                             <>
                               <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Orders Handled</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">{t('owner.staff.ordersHandled')}</p>
                                 <p className="text-sm font-medium text-gray-900">{perf.ordersHandled}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Avg Rating</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">{t('owner.staff.avgRating')}</p>
                                 <p className="text-sm font-medium text-gray-900">{perf.avgRating}/5</p>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Hourly Rate</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">{t('owner.staff.hourlyRate')}</p>
                                 <p className="text-sm font-medium text-gray-900">{money(perf.hourlyRate || 0)}</p>
                               </div>
                             </>

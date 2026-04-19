@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { Eye, EyeOff, LogIn, UtensilsCrossed, ShieldOff, Phone as PhoneIcon } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UtensilsCrossed, ShieldOff, Phone as PhoneIcon, Languages } from 'lucide-react';
 
 // Detect input type for hint + phone formatting
 function detectType(input) {
@@ -14,7 +14,7 @@ function detectType(input) {
 
 export default function Login() {
   const { login, loading } = useAuth();
-  const { t } = useTranslation();
+  const { t, lang, switchLang } = useTranslation();
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -117,7 +117,28 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center p-4 relative">
+      {/* Language switcher (top-right) */}
+      <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-lg p-1">
+        <Languages size={16} className="text-white ml-1" />
+        <button
+          onClick={() => switchLang('uz')}
+          className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+            lang === 'uz' ? 'bg-white text-purple-700 shadow' : 'text-white hover:bg-white/15'
+          }`}
+        >
+          UZ
+        </button>
+        <button
+          onClick={() => switchLang('en')}
+          className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+            lang === 'en' ? 'bg-white text-purple-700 shadow' : 'text-white hover:bg-white/15'
+          }`}
+        >
+          EN
+        </button>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Logo */}
         <div className="text-center mb-8">

@@ -62,7 +62,18 @@
     "processing": "Bajarilmoqda...",
     "noResults": "Natija topilmadi",
     "confirmDelete": "Haqiqatan ham o'chirmoqchimisiz?",
-    "actionCannotBeUndone": "Bu amalni qaytarib bo'lmaydi."
+    "actionCannotBeUndone": "Bu amalni qaytarib bo'lmaydi.",
+    "notification": "Bildirishnoma",
+    "unknownItem": "Noma'lum mahsulot",
+    "unknown": "Noma'lum",
+    "na": "N/A",
+    "tablePrefix": "Stol ",
+    "item": "Mahsulot",
+    "brandRestaurant": "The Bill Restaurant",
+    "other": "Boshqa",
+    "notProvided": "Ko'rsatilmagan",
+    "allPurpose": "Universal",
+    "preview": "Ko'rinish"
   },
 
   "login": {
@@ -97,7 +108,8 @@
     "daysLeft": "{count} kun qoldi",
     "expiredDaysAgo": "{count} kun oldin tugagan",
     "freeNeverExpires": "Bepul -- Muddatsiz",
-    "freeTrial30": "Bepul -- 30 kun"
+    "freeTrial30": "Bepul -- 30 kun",
+    "trial": "sinov"
   },
 
   "layout": {
@@ -145,11 +157,14 @@
 
   "roles": {
     "super_admin": "Bosh Admin",
+    "superAdmin": "Super Admin",
     "owner": "Egasi",
     "admin": "Administrator",
     "cashier": "Kassir",
-    "waitress": "Ofitsiant",
+    "waitress": "Ofitsiantka",
     "kitchen": "Oshpaz",
+    "kitchenStaff": "Oshxona xodimi",
+    "staff": "Xodim",
     "manager": "Menejer",
     "cleaner": "Tozalovchi"
   },
@@ -240,7 +255,26 @@
     "deactivateLabel": "O'chirish",
     "changePlan": "Rejani o'zgartirish",
     "planHistory": "Reja tarixi",
-    "accountInfo": "Hisob ma'lumotlari"
+    "accountInfo": "Hisob ma'lumotlari",
+    "slugUrl": "Slug (URL)",
+    "address": "Manzil",
+    "planUnlimited": "Cheksiz",
+    "noExpirySet": "Muddat belgilanmagan",
+    "expiredDaysAgo": "{days} kun oldin tugagan",
+    "daysLeftLabel": "{days} kun qoldi",
+    "currentPlan": "Joriy",
+    "neverExpires": "Muddatsiz",
+    "noteOptional": "Izoh (ixtiyoriy)",
+    "noPlanChanges": "Hali reja o'zgarishlari qayd etilmagan.",
+    "ownersAndAdmins": "Egalar va adminlar",
+    "noOwnersYet": "Hali egalar yoki adminlar yo'q. Boshlash uchun birini qo'shing.",
+    "staffCount": "{count} xodim",
+    "failedToSaveStaff": "Xodimni saqlashda xatolik",
+    "failedToDeactivate": "O'chirishda xatolik",
+    "failedToSaveRestaurant": "Restoranni saqlashda xatolik",
+    "failedToReactivate": "Qayta faollashtirishda xatolik",
+    "failedToUpdatePlan": "Rejani yangilashda xatolik",
+    "expiresPrefix": "Tugaydi:"
   },
 
   "admin": {
@@ -288,7 +322,22 @@
       "notifications": "Bildirishnomalar",
       "noNotifications": "Bildirishnomalar yo'q",
       "markAllRead": "Barchasini o'qilgan deb belgilash",
-      "quickActions": "Tezkor amallar"
+      "quickActions": "Tezkor amallar",
+      "earned": "Ishlangan",
+      "paidAmount": "To'langan",
+      "activeLoans": "faol qarz",
+      "noneLabel": "Yo'q",
+      "collapse": "Yig'ish",
+      "expand": "Ochish",
+      "left": "qoldi",
+      "min": "Min",
+      "moreItems": "+{count} ta mahsulot",
+      "itemsInStock": "ta mahsulot omborda",
+      "sold": "sotilgan",
+      "hWorked": "ishlagan",
+      "paymentMethods": "to'lov usul(lar)i",
+      "inventory": "Ombor",
+      "notification": "Bildirishnoma"
     },
 
     "tables": {
@@ -335,7 +384,38 @@
       "person": "kishi",
       "people": "kishi",
       "guest": "Mehmon",
-      "time": "Vaqt"
+      "time": "Vaqt",
+      "tableCountInSystem": "tizimda jami {count} ta stol",
+      "tableCountLabel": "{count} ta stol",
+      "refresh": "Yangilash",
+      "percentOfTables": "stollarning {percent}%",
+      "occupancyPercent": "{percent}% bandlik",
+      "upcomingGuests": "kutilayotgan mehmonlar",
+      "beingPrepared": "tayyorlanmoqda",
+      "somActive": "so'm faol",
+      "freeCount": "{count} bo'sh",
+      "occupiedCount": "{count} band",
+      "reservedCount": "{count} band qilingan",
+      "noFilteredTables": "{filter} bo'limida stol topilmadi",
+      "newOrder": "Yangi buyurtma",
+      "statusLabel": "Holat",
+      "phoneLabelShort": "Telefon",
+      "sectionsLabel": "Bo'limlar",
+      "sectionsWithTablesHint": "Stollar mavjud bo'limlarni o'chirib bo'lmaydi.",
+      "removeSection": "Bo'limni o'chirish",
+      "cannotRemoveSection": "O'chirib bo'lmaydi -- bo'limda stollar bor",
+      "orderNumber": "Buyurtma #{number}",
+      "itemsCount": "{count} ta taom",
+      "startNewOrderHint": "Stol kartasidan yangi buyurtma boshlang",
+      "noItemsYet": "Hali taomlar yo'q",
+      "statusFreeTitle": "Bo'sh",
+      "statusFreeSubtitle": "Mehmonlarni qabul qilishga tayyor",
+      "statusOccupiedTitle": "Band",
+      "statusOccupiedSubtitle": "Hozirda foydalanilmoqda",
+      "statusReservedTitle": "Band qilingan",
+      "statusReservedSubtitle": "Band qilish faol",
+      "statusCleaningTitle": "Tozalanmoqda",
+      "statusCleaningSubtitle": "Keyingi mehmonlar uchun tayyorlanmoqda"
     },
 
     "menu": {
@@ -392,7 +472,35 @@
       "deleteItemMsg": "Bu taom menyudan butunlay o'chiriladi.",
       "markUnavailable": "Mavjud emas deb belgilash",
       "markAvailable": "Mavjud deb belgilash",
-      "inactive": "Nofaol"
+      "inactive": "Nofaol",
+      "loadingMenu": "Menyu yuklanmoqda...",
+      "addToCategory": "{name} ga qo'shish",
+      "foundCount": "{count} ta topildi",
+      "tryDifferentSearch": "Boshqa so'z bilan qidiring",
+      "barBadge": "Bar",
+      "kitchenBadge": "Oshxona",
+      "searchAllItems": "Barcha taomlarni qidirish...",
+      "searchCategoryItems": "{name} taomlarini qidirish...",
+      "searchInactiveItems": "Nofaol taomlarni qidirish...",
+      "deleteStationTitle": "Stansiyani o'chirish?",
+      "deleteStationMessage": "\"{name}\" ni tezkor tanlovdan olib tashlansinmi? Bu mavjud menyu taomlariga ta'sir qilmaydi.",
+      "cannotDeleteStation": "Stansiyani o'chirib bo'lmaydi",
+      "addStationPreset": "\"{name}\" qo'shish",
+      "customStation": "Maxsus stansiya",
+      "perDish": "har bir taom uchun",
+      "unitPerDish": "har bir taom uchun {unit}",
+      "enterInUnit": "{unit} da kiriting -- ombor birligi bilan bir xil",
+      "qtyPerDishPlaceholder": "Har bir taom uchun miqdor",
+      "qtyPerDishWithUnit": "masalan: birlik {unit} bo'lsa 0.05",
+      "noIngredientsMatch": "\"{query}\" ga mos ingredient topilmadi",
+      "item": "Taom",
+      "uploadIssueTitle": "Yuklash muammosi",
+      "uploadIssueMessage": "Yuklash muvaffaqiyatli bo'ldi, lekin URL qaytarilmadi. Qaytadan urinib ko'ring.",
+      "uploadFailedTitle": "Yuklash muvaffaqiyatsiz",
+      "moveUp": "Yuqoriga",
+      "moveDown": "Pastga",
+      "removePreset": "Tezkor tanlovni olib tashlash",
+      "addCategory": "Kategoriya qo'shish"
     },
 
     "orders": {
@@ -414,7 +522,35 @@
       "describeReason": "Sababni tavsiflang...",
       "cancelReasons": ["Mijoz ketdi", "Mijoz fikrini o'zgartirdi", "Oshxona muammosi", "Noto'g'ri buyurtma", "Uzoq kutish", "Boshqa"],
       "deleteReasons": ["Takroriy yozuv", "Noto'g'ri stol", "Sinov buyurtmasi", "Mijoz ketdi", "Boshqa"],
-      "noOrdersFound": "Buyurtmalar topilmadi"
+      "noOrdersFound": "Buyurtmalar topilmadi",
+      "statusLabels": {
+        "pending": "Kutilmoqda",
+        "confirmed": "Tasdiqlangan",
+        "preparing": "Tayyorlanmoqda",
+        "ready": "Tayyor",
+        "served": "Berilgan",
+        "bill_requested": "Hisob so'ralgan",
+        "paid": "To'langan"
+      },
+      "nextStatusLabels": {
+        "pending": "Tasdiqlash",
+        "confirmed": "Tayyorlashni boshlash",
+        "preparing": "Tayyor deb belgilash",
+        "ready": "Berilgan deb belgilash",
+        "served": "Hisob so'rash",
+        "bill_requested": "To'langan deb belgilash"
+      },
+      "tablePrefix": "Stol",
+      "itemsCount": "{count} ta taom",
+      "nowLabel": "Hozir",
+      "minAgo": "{m} daq oldin",
+      "hoursAgo": "{h} soat oldin",
+      "splitLabel": "Bo'lish",
+      "na": "N/A",
+      "items": "Taomlar",
+      "total": "Jami",
+      "cancellationReason": "Bekor qilish sababi",
+      "date": "Sana"
     },
 
     "staff": {
@@ -454,7 +590,72 @@
         "daily": "Kunlik",
         "weekly": "Haftalik",
         "monthly": "Oylik"
-      }
+      },
+      "shiftStart": "Smena boshlanishi",
+      "shiftEnd": "Smena tugashi",
+      "shift": "Smena",
+      "station": "Stansiya",
+      "login": "Kirish",
+      "suspended": "TO'XTATILGAN",
+      "staffReactivated": "Xodim qayta faollashtirildi",
+      "staffSuspended": "Xodim to'xtatildi",
+      "clockedInAsLate": "Kechikib ishga kirdi",
+      "attendanceUpdated": "Davomat yangilandi",
+      "ownerAdminExcluded": "* Egasi va Admin rollari davomat kuzatuvidan chiqarilgan",
+      "in": "Kirish",
+      "out": "Chiqish",
+      "hours": "Soat",
+      "rate": "Foiz",
+      "due": "Qarz",
+      "netLabel": "Sof",
+      "paidLabel": "To'langan",
+      "remaining": "Qolgan",
+      "noPaymentsYet": "Hali to'lovlar yo'q",
+      "noNewPayments": "Joriy davr uchun yangi to'lovlar yo'q",
+      "totalPaid": "Jami to'langan",
+      "staffMember": "Xodim",
+      "netPay": "Sof maosh",
+      "note": "Izoh",
+      "optional": "Ixtiyoriy",
+      "payrollDetails": "Maosh tafsilotlari",
+      "salaryBreakdown": "Maosh taqsimoti",
+      "payments": "To'lovlar",
+      "hourlyRate": "Soatlik tarif",
+      "hoursWorkedLabel": "Ishlangan soatlar",
+      "dailyRate": "Kunlik tarif",
+      "daysPresent": "Kelgan kunlar",
+      "weeklySalary": "Haftalik maosh",
+      "monthlySalary": "Oylik maosh",
+      "workingDays": "Ish kunlari",
+      "basePay": "Asosiy maosh",
+      "hasBeenAdded": "qo'shildi",
+      "shareCredentials": "Yangi xodimga kirish ma'lumotlarini ulashing",
+      "setLoginPassword": "Kirish parolini belgilang",
+      "stationHint": "Stansiya: \"{station}\" -- faqat mos buyurtmalarni ko'radi",
+      "noStationHint": "Stansiya yo'q -- barcha oshxona buyurtmalarini ko'radi",
+      "deleteStationHint": "Bu stansiyani tezkor tanlov ro'yxatidan olib tashlaydi.",
+      "stationDeleted": "Stansiya o'chirildi",
+      "cannotDeleteStation": "O'chirib bo'lmaydi -- stansiya xodimga tayinlangan bo'lishi mumkin",
+      "deleteConfirmName": "{name} ni o'chirmoqchimisiz?",
+      "salaryLabel": "Maosh",
+      "lateMins": "+{mins} daq kechikdi",
+      "kitchenStations": {
+        "salad": "Salat",
+        "grill": "Gril",
+        "bar": "Bar",
+        "pastry": "Qandolatchilik",
+        "cold": "Sovuq",
+        "hot": "Issiq"
+      },
+      "fullyPaid": "To'liq to'langan",
+      "settled": "hisoblangan",
+      "attendanceRecords": "Davomat yozuvlari",
+      "noRecordsInPeriod": "Bu davrda yozuvlar yo'q",
+      "deletePaymentConfirm": "{amount} to'lovni o'chirmoqchimisiz?",
+      "clockInLabel": "Kirish",
+      "clockOutLabel": "Chiqish",
+      "netPayHeader": "Sof to'lov",
+      "stationPlaceholder": "Stantsiya nomini kiriting (yoki pastdan tanlang)"
     },
 
     "inventory": {
@@ -502,7 +703,97 @@
       "wasteReasons": ["Muddati o'tgan", "Buzilgan", "Singan", "Shikastlangan", "Sifat muammosi"],
       "adjustReasons": ["Ortiqcha hisoblangan", "Kam hisoblangan", "To'kilgan", "Audit tuzatishi", "O'g'irlik", "Sinish"],
       "deliveryStatuses": ["Buyurtma qilingan", "Yo'lda", "Qisman", "Yetkazilgan", "Bekor qilingan"],
-      "paymentMethods": ["Naqd", "Bank o'tkazmasi", "Karta", "Mobil to'lov", "Chek", "Boshqa"]
+      "paymentMethods": ["Naqd", "Bank o'tkazmasi", "Karta", "Mobil to'lov", "Chek", "Boshqa"],
+      "costPerUnit": "Birlik narxi",
+      "unit": "Birlik",
+      "expired": "MUDDATI O'TGAN",
+      "daysToExpiry": "{days} kun qoldi",
+      "stockBatches": "Zaxira partiyalari (FIFO)",
+      "noExpiry": "Muddatsiz",
+      "received": "Qabul",
+      "unpaidDebt": "To'lanmagan qarz",
+      "period": "Davr",
+      "active": "faol",
+      "deliveries": "yetkazib berish",
+      "item": "Mahsulot",
+      "qty": "Miqdor",
+      "cost": "Narx",
+      "reason": "Sabab",
+      "type": "Turi",
+      "totalCost": "Jami narx",
+      "owes": "Qarzi",
+      "orders": "buyurtma",
+      "unpaidDeliveries": "To'lanmagan yetkazib berishlar",
+      "payAll": "Hammasini to'lash",
+      "pay": "To'lash",
+      "allDeliveries": "Barcha yetkazib berishlar",
+      "terms": "Shartlar",
+      "totalDeliveries": "Jami yetkazib berishlar",
+      "totalSpent": "Jami sarflangan",
+      "editSupplier": "Yetkazuvchini tahrirlash",
+      "addSupplier": "Yetkazuvchi qo'shish",
+      "companyName": "Kompaniya nomi",
+      "contactPerson": "Aloqa shaxsi",
+      "address": "Manzil",
+      "paymentTerms": "To'lov shartlari",
+      "paymentTermsPlaceholder": "masalan: 30 kun, naqd",
+      "updateSupplier": "Yetkazuvchini yangilash",
+      "receive": "Qabul qilish",
+      "recordOutput": "Chiqimni yozish",
+      "searchItems": "Mahsulotlarni qidirish...",
+      "quantity": "Miqdor",
+      "pricePerUnit": "Har bir {unit} narxi",
+      "expiryDate": "Muddati (ixtiyoriy)",
+      "deliveryDate": "Yetkazib berish sanasi",
+      "noItemSelected": "Mahsulot tanlanmagan",
+      "recordDelivery": "Yetkazib berishni yozish",
+      "supplier": "Yetkazuvchi",
+      "payment": "To'lov",
+      "dueDate": "Muddat sanasi",
+      "deliveryItems": "Yetkazib berish mahsulotlari",
+      "addItem": "Mahsulot qo'shish",
+      "itemName": "Nomi",
+      "price": "Narx",
+      "expiry": "Muddat",
+      "saveDelivery": "Yetkazib berishni saqlash",
+      "changeStatus": "Holatni o'zgartirish",
+      "changeTo": "O'zgartirish",
+      "deliveryDetailNotes": "Izohlar",
+      "noItemsRecorded": "Bu yetkazib berish uchun mahsulotlar yozilmagan",
+      "loadingItems": "Mahsulotlar yuklanmoqda...",
+      "markPaid": "To'langan deb belgilash",
+      "recordPayment": "To'lovni yozish",
+      "paymentMethod": "To'lov usuli",
+      "paymentDate": "To'lov sanasi",
+      "invoiceCheque": "Hisob-faktura / Chek raqami (ixtiyoriy)",
+      "invoicePlaceholder": "masalan: INV-2026-0042 yoki chek #",
+      "continue": "Davom etish",
+      "confirmPayment": "To'lovni tasdiqlash",
+      "confirmPaymentQuestion": "Bu to'lov amalga oshirilganiga ishonchingiz kommi?",
+      "noGoBack": "Yo'q, orqaga",
+      "yesPaymentMade": "Ha, to'lov amalga oshirildi",
+      "deliveryDeleted": "Yetkazib berish o'chirildi",
+      "statusUpdated": "Holat yangilandi",
+      "deliveryRecordedStock": "Yetkazib berish yozildi va zaxira yangilandi",
+      "newItems": "Yangi mahsulotlar",
+      "categoryInUse": "Kategoriya ishlatilmoqda",
+      "categoryInUseMsg": "{count} ta mahsulot bu kategoriyadan foydalanadi. Avval qayta tayinlang.",
+      "categoryAdded": "\"{name}\" kategoriyasi qo'shildi",
+      "categoryRemoved": "\"{name}\" kategoriyasi olib tashlandi",
+      "categoryExists": "Kategoriya allaqachon mavjud",
+      "manageCategories": "Kategoriyalarni boshqarish",
+      "addCategory": "Kategoriya qo'shish",
+      "removeCategory": "Olib tashlash",
+      "adjustQty": "Miqdorni tuzatish",
+      "remove": "Olib tashlash",
+      "failedToLoad": "Ombor ma'lumotlarini yuklashda xatolik",
+      "namePhoneRequired": "Ism va telefon kiritilishi shart",
+      "overdue": "{days} kun kechikkan",
+      "dueToday": "Bugun muddat",
+      "dueIn": "{days} kun qoldi",
+      "paidOn": "{date} da to'langan",
+      "deleteDeliveryConfirm": "{supplier} dan yetkazib berishni o'chirmoqchimisiz?",
+      "selectReason": "Sababni tanlang"
     },
 
     "profile": {
@@ -551,7 +842,13 @@
       "selectTable": "Stol tanlash",
       "noTablesAvailable": "Stol mavjud emas",
       "menuLabel": "Menyu",
-      "off": "chegirma"
+      "off": "chegirma",
+      "clickToSelect": "Tanlash uchun bosing",
+      "selectTableWarningLong": "Buyurtma berish uchun stol tanlang",
+      "noItemsInCategory": "Bu kategoriyada taom yo'q",
+      "itemCount": "{count} ta taom",
+      "priceEach": "{price} dona",
+      "addingItems": "Qo'shilmoqda..."
     }
   },
 
@@ -588,7 +885,10 @@
       "totalStaff": "Jami xodimlar",
       "teamMembers": "Jamoa a'zolari",
       "onShift": "Smenada",
-      "loadingStaff": "Xodimlar ma'lumoti yuklanmoqda..."
+      "loadingStaff": "Xodimlar ma'lumoti yuklanmoqda...",
+      "ordersHandled": "Bajarilgan buyurtmalar",
+      "avgRating": "O'rtacha baho",
+      "hourlyRate": "Soatlik stavka"
     },
     "inventory": {
       "title": "Omborni boshqarish",
@@ -620,7 +920,11 @@
       "taxSummary": "Soliq xulosasi",
       "loansDebt": "Qarzlar",
       "payrollSummary": "Maosh xulosasi",
-      "businessInsights": "Biznes tahlillari"
+      "businessInsights": "Biznes tahlillari",
+      "interestRate": "Foiz stavkasi (%)",
+      "remaining": "Qoldiq",
+      "duePrefix": "Muddat:",
+      "revenueCategories": ["Naqd", "Karta", "QR kod", "Onlayn"]
     },
     "profile": {
       "title": "Egasi",
@@ -632,7 +936,13 @@
       "restaurantName": "Restoran nomi",
       "serviceCharge": "Xizmat haqi",
       "taxSettings": "Soliq sozlamalari",
-      "saveSettings": "Sozlamalarni saqlash"
+      "saveSettings": "Sozlamalarni saqlash",
+      "phoneNumber": "Telefon raqami",
+      "ownerFallback": "Egasi",
+      "taxRate": "Soliq stavkasi (%)",
+      "filingMonthly": "Oylik",
+      "filingQuarterly": "Choraklik",
+      "filingAnnually": "Yillik"
     }
   },
 
@@ -677,15 +987,42 @@
       "proceedToPayment": "To'lovga o'tish",
       "skip": "O'tkazish",
       "ways": "qism",
-      "part": "Qism"
+      "part": "Qism",
+      "activeOrderCount": "{count} ta faol buyurtma",
+      "addPaymentNotes": "To'lov eslatmasi qo'shing...",
+      "noPrinterIp": "Printer IP manzili yo'q",
+      "noPrinterBrowser": "Printer IP yo'q -- brauzer chop etish ishlatiladi",
+      "paymentFailed": "To'lov amalga oshmadi. Qaytadan urinib ko'ring.",
+      "couldNotLoadOrder": "Buyurtmani yuklab bo'lmadi",
+      "thankYou": "Tashrifingiz uchun rahmat!",
+      "namePlaceholder": "Ism...",
+      "noPhone": "Telefon yo'q",
+      "tax": "Soliq",
+      "service": "Xizmat",
+      "method": "Usul",
+      "receiptTotal": "Jami",
+      "split": "Bo'lish",
+      "item": "Taom"
     },
     "tables": {
-      "title": "Kassir - Stollar"
+      "title": "Kassir - Stollar",
+      "liveUpdates": "stollar -- jonli yangilanishlar",
+      "mainFloor": "Asosiy zal",
+      "indoor": "Ichki",
+      "serviceCharge": "Xizmat haqi",
+      "paymentFailed": "To'lov amalga oshmadi",
+      "tableNum": "{num}-stol",
+      "noPrinterBrowser": "Printer IP yo'q -- brauzer chop etish ishlatiladi"
     },
     "history": {
       "title": "To'lovlar tarixi",
       "refundReasons": ["Mijoz shikoyati", "Noto'g'ri buyurtma", "Takroriy to'lov", "Boshqa"],
-      "refundProcessed": "Qaytarish amalga oshirildi"
+      "refundProcessed": "Qaytarish amalga oshirildi",
+      "tapDateHint": "Boshlanish/tugash sanasini tanlash uchun bosing",
+      "itemCount": "{count} ta taom",
+      "walkIn": "Kelgan mijoz",
+      "paid": "to'langan",
+      "refunded": "qaytarilgan"
     },
     "loans": {
       "title": "Qarzlar",
@@ -694,7 +1031,26 @@
       "daysLeft": "{days} kun qoldi",
       "outstanding": "Joriy qarzlar",
       "overdue": "Muddati o'tgan",
-      "recovered": "Qaytarilgan"
+      "recovered": "Qaytarilgan",
+      "collectPayment": "Qarz to'lovini yig'ish",
+      "customer": "Mijoz",
+      "loanAmount": "Qarz summasi",
+      "dueDate": "Muddat sanasi",
+      "phone": "Telefon",
+      "notes": "Eslatmalar",
+      "selectPaymentMethod": "To'lov usulini tanlang",
+      "totalToCollect": "Yig'ish kerak",
+      "selected": "Tanlangan",
+      "markedAsPaid": "Qarz to'langan deb belgilandi",
+      "couldNotUpdate": "Qarzni yangilab bo'lmadi",
+      "noLoansFound": "Qarzlar topilmadi",
+      "searchPlaceholder": "Mijoz ismi yoki telefoni bo'yicha qidiring...",
+      "selectPeriod": "Davrni tanlang",
+      "markPaid": "To'langan deb belgilash",
+      "failedToLoad": "Qarzlarni yuklab bo'lmadi",
+      "unknown": "Noma'lum",
+      "allStatuses": "Barchasi",
+      "tapDateHint": "Boshlanish/tugash sanasini tanlash uchun bosing"
     },
     "profile": {
       "ordersToday": "Bugungi buyurtmalar",
@@ -746,7 +1102,9 @@
       "shiftHours": "Smena soatlari",
       "noShifts": "Bu davrda smenalar yo'q",
       "noPayments": "Bu davrda to'lovlar yo'q",
-      "totalPayments": "Jami to'lovlar"
+      "totalPayments": "Jami to'lovlar",
+      "inProgress": "Jarayonda",
+      "payment": "To'lov"
     },
     "profile": {
       "title": "Ofitsiant",
@@ -800,5 +1158,71 @@
     "uzbek": "O'zbekcha",
     "english": "English",
     "selectLanguage": "Tilni tanlang"
+  },
+
+  "placeholders": {
+    "pickDate": "Sanani tanlang",
+    "phoneLocal": "90 123 45 67",
+    "phoneShort": "12 345 67 89",
+    "egFlour": "masalan, Un",
+    "number5": "5",
+    "number4": "4",
+    "zero": "0",
+    "setDueDate": "Muddatni belgilang",
+    "optionalNotes": "Qo'shimcha izohlar...",
+    "itemName": "Mahsulot nomi",
+    "qty": "Miqdor",
+    "price": "Narx",
+    "expiry": "Yaroqlilik muddati",
+    "egCategory": "masalan, Ziravorlar, Sut mahsulotlari...",
+    "orderNotes": "Buyurtmaga izoh qo'shing...",
+    "customerName": "Mijoz ismi",
+    "nameDots": "Ism...",
+    "paymentNotes": "To'lov izohini qo'shing...",
+    "describeReason": "Sababni tavsiflang...",
+    "egStaffName": "masalan, Aisha Karimova",
+    "email": "email",
+    "staffEmail": "staff@example.com",
+    "egPosition": "masalan, Shifokor",
+    "ipAddress": "192.168.1.100",
+    "egSlug": "the-bill-downtown",
+    "egAddress": "Ko'cha, Shahar, Toshkent",
+    "egPaymentDesc": "masalan, Bank o'tkazmasi orqali to'langan",
+    "egEmail": "john@thebill.uz",
+    "startDate": "Boshlanish sanasi",
+    "endDate": "Tugash sanasi",
+    "yourName": "Ismingiz"
+  },
+
+  "alerts": {
+    "failedDeleteStation": "Stansiyani o'chirib bo'lmadi",
+    "failedUpdateProfile": "Profilni yangilab bo'lmadi.",
+    "failedChangePassword": "Parolni o'zgartirib bo'lmadi.",
+    "refundFailed": "Qaytarish amalga oshmadi",
+    "failedLoadOrders": "Buyurtmalarni yuklab bo'lmadi"
+  },
+
+  "fallbacks": {
+    "placeholder": ""
+  },
+
+  "payment": {
+    "cash": "Naqd"
+  },
+
+  "salary": {
+    "monthly": "oylik"
+  },
+
+  "receipt": {
+    "thankYou": "Bizning mehmonimiz bo'lganingiz uchun rahmat!"
+  },
+
+  "tables": {
+    "indoor": "Ichkarida"
+  },
+
+  "orders": {
+    "cancelOrder": "Buyurtmani bekor qilish"
   }
 }

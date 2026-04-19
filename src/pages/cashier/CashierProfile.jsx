@@ -101,7 +101,7 @@ const CashierProfile = () => {
 
           {/* Name / role */}
           <div className="text-center md:text-left flex-1">
-            <h1 className="text-2xl font-bold text-white">{user?.name || 'Cashier'}</h1>
+            <h1 className="text-2xl font-bold text-white">{user?.name || t('roles.cashier', 'Cashier')}</h1>
             <p className="text-sm text-white/70 mt-0.5">{user?.email || ''}</p>
             <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-semibold"
               style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
@@ -149,9 +149,9 @@ const CashierProfile = () => {
           </div>
           <div className="divide-y divide-gray-50">
             {[
-              { label: t('common.name'),  value: user?.name  || 'N/A' },
-              { label: t('common.email'), value: user?.email || 'N/A' },
-              { label: t('common.phone'), value: user?.phone || 'N/A' },
+              { label: t('common.name'),  value: user?.name  || t('common.na', 'N/A') },
+              { label: t('common.email'), value: user?.email || t('common.na', 'N/A') },
+              { label: t('common.phone'), value: user?.phone || t('common.na', 'N/A') },
               { label: t('common.role'),  value: t('roles.cashier')   },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between px-6 py-4">

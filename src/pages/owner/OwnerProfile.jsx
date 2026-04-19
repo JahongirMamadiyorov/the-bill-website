@@ -177,7 +177,7 @@ export default function OwnerProfile() {
                 {user.name?.charAt(0).toUpperCase() || 'O'}
               </span>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 text-center">{user.name || 'Owner'}</h2>
+            <h2 className="text-lg font-bold text-gray-900 text-center">{user.name || t('owner.profile.ownerFallback')}</h2>
             <p className="text-sm text-gray-600 text-center mt-2">{user.role || t('owner.profile.restaurantOwner')}</p>
           </div>
 
@@ -253,7 +253,7 @@ export default function OwnerProfile() {
                 <PhoneInput
                   value={user.phone || ''}
                   onChange={(formattedPhone) => setUser({ ...user, phone: formattedPhone })}
-                  label="Phone Number"
+                  label={t('owner.profile.phoneNumber')}
                   size="md"
                 />
               </div>
@@ -373,7 +373,7 @@ export default function OwnerProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('owner.profile.taxRate')}</label>
                   <input
                     type="number"
                     value={taxSettings.taxRate || 0}
@@ -387,12 +387,12 @@ export default function OwnerProfile() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.category')}</label>
                   <Dropdown
-                    value={taxSettings.filingFrequency || 'monthly'}
+                    value={taxSettings.filingFrequency || t('salary.monthly', 'monthly')}
                     onChange={(value) => setTaxSettings({ ...taxSettings, filingFrequency: value })}
                     options={[
-                      { value: 'monthly', label: 'Monthly' },
-                      { value: 'quarterly', label: 'Quarterly' },
-                      { value: 'annually', label: 'Annually' },
+                      { value: 'monthly', label: t('owner.profile.filingMonthly') },
+                      { value: 'quarterly', label: t('owner.profile.filingQuarterly') },
+                      { value: 'annually', label: t('owner.profile.filingAnnually') },
                     ]}
                   />
                 </div>

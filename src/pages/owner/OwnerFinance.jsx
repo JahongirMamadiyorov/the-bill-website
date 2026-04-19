@@ -82,9 +82,9 @@ export default function OwnerFinance() {
     if (!summary?.revenueByPayment) return [];
     const pm = summary.revenueByPayment;
     return [
-      { category: 'Cash',   amount: pm.cash || 0 },
-      { category: 'Card',   amount: pm.card || 0 },
-      { category: 'QR/Online', amount: pm.qr || 0 },
+      { category: t('paymentMethods.cash'),   amount: pm.cash || 0 },
+      { category: t('paymentMethods.card'),   amount: pm.card || 0 },
+      { category: t('paymentMethods.qrCode') + '/' + t('paymentMethods.online'), amount: pm.qr || 0 },
     ].filter(i => i.amount > 0);
   }, [summary]);
 
@@ -102,7 +102,7 @@ export default function OwnerFinance() {
     if (budgets.length === 0) return [];
     const expMap = {};
     expenses.forEach(e => {
-      const cat = e.category || 'Other';
+      const cat = e.category || t('common.other', 'Other');
       expMap[cat] = (expMap[cat] || 0) + parseFloat(e.amount || 0);
     });
     return budgets.map(b => ({
@@ -120,7 +120,7 @@ export default function OwnerFinance() {
       await financeAPI.createExpense({
         description: expenseForm.description,
         amount: parseFloat(expenseForm.amount),
-        category: expenseForm.category || 'Other',
+        category: expenseForm.category || t('common.other', 'Other'),
         date: todayStr(),
       });
       setShowExpenseModal(false);
@@ -150,7 +150,7 @@ export default function OwnerFinance() {
       await financeAPI.updateExpense(editingExpense.id, {
         description: expenseForm.description,
         amount: parseFloat(expenseForm.amount),
-        category: expenseForm.category || 'Other',
+        category: expenseForm.category || t('common.other', 'Other'),
       });
       setShowExpenseModal(false);
       setEditingExpense(null);
@@ -393,10 +393,10 @@ export default function OwnerFinance() {
                         <td className="py-3 px-4 text-gray-900 font-medium">{money(exp.amount || 0)}</td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <button onClick={() => handleEditExpense(exp)} className="text-purple-600 hover:text-purple-700 transition" title="Edit">
+                            <button onClick={() => handleEditExpense(exp)} className="text-purple-600 hover:text-purple-700 transition" title={t('common.edit', 'Edit')}>
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleDeleteExpense(exp.id)} className="text-red-600 hover:text-red-700 transition" title="Delete">
+                            <button onClick={() => handleDeleteExpense(exp.id)} className="text-red-600 hover:text-red-700 transition" title={t('common.delete', 'Delete')}>
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -477,7 +477,7 @@ export default function OwnerFinance() {
                       </div>
                       <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 mt-3">
                         <div>
-                          <p className="text-xs text-gray-500">Interest Rate</p>
+                          <p className="text-xs text-gray-500">{t('owner.finance.interestRate')}</p>
                           <p className="font-medium text-gray-900">{loan.interestRate || 0}%</p>
                         </div>
                         <div>
@@ -485,7 +485,7 @@ export default function OwnerFinance() {
                           <p className="font-medium text-gray-900">{money(loan.amountPaid || 0)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Remaining</p>
+                          <p className="text-xs text-gray-500">{t('owner.finance.remaining')}</p>
                           <p className="font-medium text-red-600">{money(remaining > 0 ? remaining : 0)}</p>
                         </div>
                       </div>
@@ -494,7 +494,7 @@ export default function OwnerFinance() {
                         <div className="h-1.5 rounded-full transition-all" style={{ backgroundColor: P, width: `${Math.min(paidPct, 100)}%` }} />
                       </div>
                       {loan.dueDate && (
-                        <p className="text-xs text-gray-400 mt-2">Due: {new Date(loan.dueDate).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-400 mt-2">{t('owner.finance.duePrefix')} {new Date(loan.dueDate).toLocaleDateString()}</p>
                       )}
                     </div>
                   );
@@ -568,13 +568,10 @@ export default function OwnerFinance() {
                     onChange={(value) => setExpenseForm({ ...expenseForm, category: value })}
                     options={[
                       { value: '', label: t('owner.finance.selectCategory') },
-                      { value: 'Supplies', label: 'Supplies' },
-                      { value: 'Utilities', label: 'Utilities' },
-                      { value: 'Maintenance', label: 'Maintenance' },
-                      { value: 'Marketing', label: 'Marketing' },
-                      { value: 'Rent', label: 'Rent' },
-                      { value: 'Salaries', label: 'Salaries' },
-                      { value: 'Other', label: 'Other' },
+                      ...t('owner.finance.expenseCategories').map((cat, i) => ({
+                        value: ['Supplies','Utilities','Maintenance','Marketing','Rent','Salaries','Other'][i],
+                        label: cat,
+                      })),
                     ]}
                   />
                 </div>
@@ -585,7 +582,7 @@ export default function OwnerFinance() {
                     value={expenseForm.amount}
                     onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="0"
+                    placeholder={t('placeholders.zero', '0')}
                   />
                 </div>
                 <div className="flex gap-3 mt-6">
@@ -634,17 +631,17 @@ export default function OwnerFinance() {
                     value={loanForm.totalAmount}
                     onChange={(e) => setLoanForm({ ...loanForm, totalAmount: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="0"
+                    placeholder={t('placeholders.zero', '0')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('owner.finance.interestRate')}</label>
                   <input
                     type="number"
                     value={loanForm.interestRate}
                     onChange={(e) => setLoanForm({ ...loanForm, interestRate: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="0"
+                    placeholder={t('placeholders.zero', '0')}
                   />
                 </div>
                 <div>

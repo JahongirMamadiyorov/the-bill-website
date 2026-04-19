@@ -82,7 +82,7 @@ const WaitressPerformance = () => {
               <DatePicker
                 value={fromDate}
                 onChange={(v) => setFromDate(v)}
-                placeholder="From"
+                placeholder={t('common.from')}
                 className="w-full"
               />
             </div>
@@ -91,7 +91,7 @@ const WaitressPerformance = () => {
               <DatePicker
                 value={toDate}
                 onChange={(v) => setToDate(v)}
-                placeholder="To"
+                placeholder={t('common.to')}
                 className="w-full"
               />
             </div>
@@ -163,7 +163,7 @@ const WaitressPerformance = () => {
                       </div>
                       <p className="text-sm text-gray-600 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        {clockIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {clockOut ? clockOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In progress'}
+                        {clockIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {clockOut ? clockOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('waitress.performance.inProgress')}
                       </p>
                     </div>
                   );
@@ -188,7 +188,7 @@ const WaitressPerformance = () => {
                   {payments.map(payment => (
                     <div key={payment.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-gray-900">{payment.description || 'Payment'}</p>
+                        <p className="font-semibold text-gray-900">{payment.description || t('waitress.performance.payment')}</p>
                         <p className="font-bold text-lg" style={{ color: '#16A34A' }}>{money(payment.amount)}</p>
                       </div>
                       <p className="text-sm text-gray-600">

@@ -39,6 +39,7 @@ function localToPhone(local) {
 /* ── Phone Input Component ────────────────────────────────────────────────── */
 function PhoneInput({ value, onChange, className }) {
   // value = full phone like "+998901234567", onChange receives full phone
+  const { t } = useTranslation();
   const local = phoneToLocal(value);
   const display = formatPhoneLocal(local);
 
@@ -59,7 +60,7 @@ function PhoneInput({ value, onChange, className }) {
         inputMode="numeric"
         value={display}
         onChange={handleChange}
-        placeholder="90 123 45 67"
+        placeholder={t('placeholders.phoneLocal', '90 123 45 67')}
       />
     </div>
   );
@@ -84,17 +85,17 @@ function planBadgeClasses(plan) {
   return map[plan] || 'bg-gray-100 text-gray-600 border-gray-200';
 }
 
-function planStatus(restaurant) {
+function planStatus(restaurant, t) {
   const plan = restaurant.plan || 'trial';
-  if (plan === 'vip') return { status: 'active', label: 'Unlimited', color: 'green' };
+  if (plan === 'vip') return { status: 'active', label: t('superAdmin.planUnlimited'), color: 'green' };
   const exp = restaurant.planExpiresAt;
-  if (!exp) return { status: 'unknown', label: 'No expiry set', color: 'gray' };
+  if (!exp) return { status: 'unknown', label: t('superAdmin.noExpirySet'), color: 'gray' };
   const now = new Date();
   const expDate = new Date(exp);
   const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-  if (daysLeft < 0) return { status: 'expired', label: `Expired ${Math.abs(daysLeft)}d ago`, color: 'red' };
-  if (daysLeft <= 7) return { status: 'warning', label: `${daysLeft}d left`, color: 'amber' };
-  return { status: 'active', label: `${daysLeft}d left`, color: 'green' };
+  if (daysLeft < 0) return { status: 'expired', label: t('superAdmin.expiredDaysAgo', { days: Math.abs(daysLeft) }), color: 'red' };
+  if (daysLeft <= 7) return { status: 'warning', label: t('superAdmin.daysLeftLabel', { days: daysLeft }), color: 'amber' };
+  return { status: 'active', label: t('superAdmin.daysLeftLabel', { days: daysLeft }), color: 'green' };
 }
 
 function formatDate(d) {
@@ -173,14 +174,14 @@ function RestaurantModal({ open, onClose, onSave, initial, saving }) {
                 value={form.name} onChange={e => handleNameChange(e.target.value)} placeholder={t('superAdmin.restaurantNamePlaceholder')} />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Slug (URL)</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('superAdmin.slugUrl')}</label>
               <input className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-shadow"
-                value={form.slug} onChange={e => { setAutoSlug(false); setForm(f => ({ ...f, slug: e.target.value })); }} placeholder="the-bill-downtown" />
+                value={form.slug} onChange={e => { setAutoSlug(false); setForm(f => ({ ...f, slug: e.target.value })); }} placeholder={t('placeholders.egSlug', 'the-bill-downtown')} />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Address</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('superAdmin.address')}</label>
               <input className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-shadow"
-                value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="123 Main Street, Tashkent" />
+                value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder={t('placeholders.egAddress', '123 Main Street, Tashkent')} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('common.phone')}</label>
@@ -275,7 +276,7 @@ function PlanModal({ open, onClose, onSave, restaurant, saving }) {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-gray-900">{meta.label}</span>
                       {isCurrent && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-gray-200 text-gray-600 rounded">Current</span>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-gray-200 text-gray-600 rounded">{t('superAdmin.currentPlan')}</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -295,9 +296,9 @@ function PlanModal({ open, onClose, onSave, restaurant, saving }) {
           </div>
 
           <div className="mt-4">
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Note (optional)</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('superAdmin.noteOptional')}</label>
             <input className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-shadow"
-              value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Paid via bank transfer" />
+              value={note} onChange={e => setNote(e.target.value)} placeholder={t('placeholders.egPaymentDesc', 'e.g. Paid via bank transfer')} />
           </div>
         </div>
 
@@ -355,7 +356,7 @@ function PlanHistoryModal({ open, onClose, restaurant }) {
           {loading ? (
             <div className="py-10 text-center"><Loader2 size={24} className="animate-spin text-gray-400 mx-auto" /></div>
           ) : history.length === 0 ? (
-            <p className="text-sm text-gray-400 py-10 text-center">No plan changes recorded yet.</p>
+            <p className="text-sm text-gray-400 py-10 text-center">{t('superAdmin.noPlanChanges')}</p>
           ) : (
             <div className="space-y-3">
               {history.map((h, i) => (
@@ -371,7 +372,7 @@ function PlanHistoryModal({ open, onClose, restaurant }) {
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      {formatDate(h.startedAt)} {h.expiresAt ? ` -- ${formatDate(h.expiresAt)}` : ' -- Never expires'}
+                      {formatDate(h.startedAt)} {h.expiresAt ? ` -- ${formatDate(h.expiresAt)}` : ` -- ${t('superAdmin.neverExpires')}`}
                     </p>
                     {h.note && <p className="text-xs text-gray-400 mt-1 italic">"{h.note}"</p>}
                   </div>
@@ -432,7 +433,7 @@ function StaffModal({ open, onClose, onSave, initial, saving, restaurantName }) 
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('common.email')}</label>
             <input className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-shadow"
-              value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="john@thebill.uz" type="email" />
+              value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder={t('placeholders.egEmail', 'john@thebill.uz')} type="email" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{t('common.phone')}</label>
@@ -491,7 +492,7 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel, confirmLabel
           <button onClick={onCancel} className="flex-1 px-4 py-2.5 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">{t('common.cancel')}</button>
           <button onClick={onConfirm}
             className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors shadow-sm ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'}`}>
-            {confirmLabel || 'Confirm'}
+            {confirmLabel || t('common.confirm', 'Confirm')}
           </button>
         </div>
       </div>
@@ -563,7 +564,7 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
       setStaffModal({ open: false, initial: null });
       loadStaff();
     } catch (err) {
-      alert(err.error || 'Failed to save staff');
+      alert(err.error || t('superAdmin.failedToSaveStaff'));
     }
     setStaffSaving(false);
   };
@@ -575,12 +576,12 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
       setConfirmDel(null);
       loadStaff();
     } catch (err) {
-      alert(err.error || 'Failed to deactivate');
+      alert(err.error || t('superAdmin.failedToDeactivate'));
     }
   };
 
   const isActive = restaurant.isActive !== false;
-  const ps = planStatus(restaurant);
+  const ps = planStatus(restaurant, t);
 
   return (
     <div className={`bg-white rounded-2xl border-2 ${
@@ -624,7 +625,7 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
               {ps.label}
             </span>
             {restaurant.planExpiresAt && (restaurant.plan || 'trial') !== 'vip' && (
-              <span className="text-[10px] text-gray-400">Expires: {formatDate(restaurant.planExpiresAt)}</span>
+              <span className="text-[10px] text-gray-400">{t('superAdmin.expiresPrefix')} {formatDate(restaurant.planExpiresAt)}</span>
             )}
           </div>
         </div>
@@ -657,7 +658,7 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
 
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-lg font-medium">
-              {restaurant.staffCount || 0} staff
+              {t('superAdmin.staffCount', { count: restaurant.staffCount || 0 })}
             </span>
             <button onClick={handleToggle}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
@@ -672,7 +673,7 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
       {expanded && (
         <div className="border-t-2 border-gray-100 bg-gray-50/70 px-6 py-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Owners & Admins</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('superAdmin.ownersAndAdmins')}</p>
             <button onClick={() => setStaffModal({ open: true, initial: null })}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
               <UserPlus size={13} /> {t('superAdmin.addStaff')}
@@ -681,7 +682,7 @@ function RestaurantCard({ restaurant, onEdit, onDelete, onReactivate, onChangePl
           {staffLoading ? (
             <div className="py-8 text-center"><Loader2 size={22} className="animate-spin text-gray-400 mx-auto" /></div>
           ) : staff.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">No owners or admins yet. Add one to get started.</p>
+            <p className="text-sm text-gray-400 py-6 text-center">{t('superAdmin.noOwnersYet')}</p>
           ) : (
             <div className="space-y-1">
               {staff.map(s => (
@@ -758,7 +759,7 @@ export default function SuperAdminRestaurants() {
       setModal({ open: false, initial: null });
       load();
     } catch (err) {
-      alert(err.error || 'Failed to save restaurant');
+      alert(err.error || t('superAdmin.failedToSaveRestaurant'));
     }
     setSaving(false);
   };
@@ -770,7 +771,7 @@ export default function SuperAdminRestaurants() {
       setConfirmDel(null);
       load();
     } catch (err) {
-      alert(err.error || 'Failed to deactivate');
+      alert(err.error || t('superAdmin.failedToDeactivate'));
     }
   };
 
@@ -779,7 +780,7 @@ export default function SuperAdminRestaurants() {
       await superAdminAPI.reactivateRestaurant(r.id);
       load();
     } catch (err) {
-      alert(err.error || 'Failed to reactivate');
+      alert(err.error || t('superAdmin.failedToReactivate'));
     }
   };
 
@@ -791,7 +792,7 @@ export default function SuperAdminRestaurants() {
       setPlanModal({ open: false, restaurant: null });
       load();
     } catch (err) {
-      alert(err.error || 'Failed to update plan');
+      alert(err.error || t('superAdmin.failedToUpdatePlan'));
     }
     setPlanSaving(false);
   };
@@ -802,7 +803,7 @@ export default function SuperAdminRestaurants() {
     if (filter === 'active') return r.isActive !== false;
     if (filter === 'inactive') return r.isActive === false;
     if (filter === 'expired') {
-      const ps = planStatus(r);
+      const ps = planStatus(r, t);
       return ps.status === 'expired';
     }
     return true;

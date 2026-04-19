@@ -11,8 +11,7 @@ import { money } from '../../hooks/useApi';
 import { useTranslation } from '../../context/LanguageContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_HDRS = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+// MONTH_NAMES and DAY_HDRS loaded from i18n
 
 const todayStr = () => {
   const d = new Date();
@@ -48,14 +47,14 @@ const METHOD_ICONS = {
   qr: <QrCode className="w-4 h-4" />,
 };
 
-const REFUND_REASONS = ['Customer Complaint', 'Wrong Order', 'Duplicate Payment', 'Other'];
+// REFUND_REASONS loaded from i18n: t('cashier.history.refundReasons')
 
 const TODAY = todayStr();
-const presets = [
-  { label: 'Today',      from: TODAY, to: TODAY },
-  { label: 'This Week',  from: fmtDateStr(getMonday(new Date())), to: TODAY },
-  { label: 'This Month', from: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), to: TODAY },
-  { label: 'Last Month', from: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth()-1, 1)), to: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 0)) },
+const getPresets = (t) => [
+  { label: t('periods.today'),      from: TODAY, to: TODAY },
+  { label: t('periods.thisWeek'),  from: fmtDateStr(getMonday(new Date())), to: TODAY },
+  { label: t('periods.thisMonth'), from: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), to: TODAY },
+  { label: t('periods.lastMonth'), from: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth()-1, 1)), to: fmtDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 0)) },
 ];
 
 // ── Calendar Date Range Picker ────────────────────────────────────────────────
@@ -149,13 +148,13 @@ function CalendarPicker({ visible, onClose, period, onChange }) {
           {/* Month nav */}
           <div className="flex items-center justify-between">
             <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 font-bold text-lg">‹</button>
-            <span className="text-sm font-semibold text-gray-800">{MONTH_NAMES[viewMonth]} {viewYear}</span>
+            <span className="text-sm font-semibold text-gray-800">{t('datePicker.months')[viewMonth]} {viewYear}</span>
             <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 font-bold text-lg">›</button>
           </div>
 
           {/* Day headers */}
           <div className="grid grid-cols-7">
-            {DAY_HDRS.map(d => (
+            {t('datePicker.days').map(d => (
               <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
             ))}
           </div>
@@ -189,7 +188,7 @@ function CalendarPicker({ visible, onClose, period, onChange }) {
 
           {/* Presets */}
           <div className="flex flex-wrap gap-2">
-            {presets.map(p => (
+            {getPresets(t).map(p => (
               <button
                 key={p.label}
                 onClick={() => setPreset(p.from, p.to)}
@@ -285,12 +284,12 @@ function FilterPanel({ visible, onClose, filters, onChange, waitressOptions, tab
                 <button
                   key={s}
                   onClick={() => toggle('status', s)}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold border capitalize transition"
+                  className="px-3 py-2 rounded-xl text-sm font-semibold border transition"
                   style={local.status === s
                     ? { backgroundColor: '#0891B2', color: '#fff', borderColor: '#0891B2' }
                     : { backgroundColor: '#fff', color: '#374151', borderColor: '#E5E7EB' }
                   }
-                >{s}</button>
+                >{t(`cashier.history.${s}`)}</button>
               ))}
             </div>
           </div>
@@ -381,14 +380,14 @@ function OrderDetailModal({ order, onClose, onRefund }) {
   const isSplit    = methodKey === 'split';
 
   const methodMeta = {
-    cash:     { icon: <Banknote className="w-5 h-5" />,    label: 'Cash',     color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' },
-    card:     { icon: <CreditCard className="w-5 h-5" />,  label: 'Card',     color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' },
-    qr_code:  { icon: <QrCode className="w-5 h-5" />,      label: 'QR Code',  color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
-    'qr code':{ icon: <QrCode className="w-5 h-5" />,      label: 'QR Code',  color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
-    loan:     { icon: <Wallet className="w-5 h-5" />,       label: 'Loan',     color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-    split:    { icon: <Receipt className="w-5 h-5" />,      label: 'Split',    color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' },
+    cash:     { icon: <Banknote className="w-5 h-5" />,    label: t('paymentMethods.cash'),     color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' },
+    card:     { icon: <CreditCard className="w-5 h-5" />,  label: t('paymentMethods.card'),     color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' },
+    qr_code:  { icon: <QrCode className="w-5 h-5" />,      label: t('paymentMethods.qrCode'),   color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
+    'qr code':{ icon: <QrCode className="w-5 h-5" />,      label: t('paymentMethods.qrCode'),   color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
+    loan:     { icon: <Wallet className="w-5 h-5" />,       label: t('paymentMethods.loan'),     color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+    split:    { icon: <Receipt className="w-5 h-5" />,      label: t('cashier.orders.split'),    color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' },
   };
-  const mMeta = methodMeta[methodKey] || { icon: <Wallet className="w-5 h-5" />, label: data.paymentMethod || 'Cash', color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' };
+  const mMeta = methodMeta[methodKey] || { icon: <Wallet className="w-5 h-5" />, label: data.paymentMethod || t('paymentMethods.cash'), color: '#0891B2', bg: '#F0F9FF', border: '#BAE6FD' };
 
   return (
     <div
@@ -437,7 +436,7 @@ function OrderDetailModal({ order, onClose, onRefund }) {
             {/* Meta strip */}
             <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100 flex-shrink-0">
               {[
-                { icon: <TableProperties className="w-4 h-4" />, label: t('nav.tables'),   value: data.tableName || 'Walk-in' },
+                { icon: <TableProperties className="w-4 h-4" />, label: t('nav.tables'),   value: data.tableName || t('cashier.orders.walkIn') },
                 { icon: <User className="w-4 h-4" />,            label: t('roles.waitress'),  value: data.waitressName || '—' },
                 { icon: <Clock className="w-4 h-4" />,           label: t('common.date'),    value: dateTimeStr(data.paidAt || data.updatedAt).split('  ')[0] },
               ].map(({ icon, label, value }) => (
@@ -624,7 +623,7 @@ function OrderDetailModal({ order, onClose, onRefund }) {
 // ── Refund Modal ──────────────────────────────────────────────────────────────
 function RefundModal({ order, onClose, onConfirm, loading }) {
   const { t } = useTranslation();
-  const [reason, setReason] = useState(REFUND_REASONS[0]);
+  const [reason, setReason] = useState(t('cashier.history.refundReasons')[0]);
 
   if (!order) return null;
 
@@ -646,7 +645,7 @@ function RefundModal({ order, onClose, onConfirm, loading }) {
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('admin.orders.selectReason')}</p>
           <div className="space-y-2">
-            {REFUND_REASONS.map(r => (
+            {t('cashier.history.refundReasons').map(r => (
               <button
                 key={r}
                 onClick={() => setReason(r)}
@@ -763,7 +762,7 @@ export default function CashierHistory() {
       setRefundTarget(null);
       loadOrders();
     } catch (e) {
-      setToast({ type: 'error', msg: e?.error || 'Refund failed' });
+      setToast({ type: 'error', msg: e?.error || t('alerts.refundFailed', 'Refund failed') });
     } finally {
       setRefunding(false);
       setTimeout(() => setToast(null), 4000);
@@ -936,7 +935,7 @@ export default function CashierHistory() {
                     <tr key={order.id} className="hover:bg-gray-50 transition">
                       <td className="px-5 py-4 text-sm text-gray-600">{dateTimeStr(order.paidAt || order.updatedAt)}</td>
                       <td className="px-5 py-4 font-bold text-gray-900">{fmtOrderNum(order)}</td>
-                      <td className="px-5 py-4 text-sm text-gray-700">{order.tableName || 'Walk-in'}</td>
+                      <td className="px-5 py-4 text-sm text-gray-700">{order.tableName || t('cashier.orders.walkIn')}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 text-sm text-gray-700">
                           <span className="text-gray-400">{icon}</span>

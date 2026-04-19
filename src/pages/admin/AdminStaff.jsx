@@ -42,13 +42,13 @@ const elapsedStr = (from) => {
 const ROLES = ['waitress', 'kitchen', 'cashier', 'cleaner'];
 const SALARY_TYPES = ['hourly', 'daily', 'weekly', 'monthly'];
 
-const KITCHEN_STATIONS = [
-  { id: 'salad',  label: 'Salad',  Icon: Salad,       color: '#16A34A', bg: '#F0FDF4' },
-  { id: 'grill',  label: 'Grill',  Icon: Flame,       color: '#EA580C', bg: '#FFF7ED' },
-  { id: 'bar',    label: 'Bar',    Icon: Wine,        color: '#2563EB', bg: '#EFF6FF' },
-  { id: 'pastry', label: 'Pastry', Icon: Cake,        color: '#A21CAF', bg: '#FDF4FF' },
-  { id: 'cold',   label: 'Cold',   Icon: Snowflake,   color: '#0891B2', bg: '#ECFEFF' },
-  { id: 'hot',    label: 'Hot',    Icon: Thermometer, color: '#DC2626', bg: '#FEF2F2' },
+const getKitchenStations = (t) => [
+  { id: 'salad',  label: t('admin.staff.kitchenStations.salad'),  Icon: Salad,       color: '#16A34A', bg: '#F0FDF4' },
+  { id: 'grill',  label: t('admin.staff.kitchenStations.grill'),  Icon: Flame,       color: '#EA580C', bg: '#FFF7ED' },
+  { id: 'bar',    label: t('admin.staff.kitchenStations.bar'),    Icon: Wine,        color: '#2563EB', bg: '#EFF6FF' },
+  { id: 'pastry', label: t('admin.staff.kitchenStations.pastry'), Icon: Cake,        color: '#A21CAF', bg: '#FDF4FF' },
+  { id: 'cold',   label: t('admin.staff.kitchenStations.cold'),   Icon: Snowflake,   color: '#0891B2', bg: '#ECFEFF' },
+  { id: 'hot',    label: t('admin.staff.kitchenStations.hot'),    Icon: Thermometer, color: '#DC2626', bg: '#FEF2F2' },
 ];
 
 // Working days in a date range (Mon-Sat, excl Sunday)
@@ -409,7 +409,7 @@ const AdminStaff = () => {
         });
         setShowNewStaffModal(true);
       }
-    } catch (e) { showError(e.message || 'Failed to save'); }
+    } catch (e) { showError(e.message || t('common.error')); }
   };
 
   const handleDeleteStaff = async () => {
@@ -439,16 +439,16 @@ const AdminStaff = () => {
       setShowCredentialsModal(false);
       setCredentialsData({ email: '', newPassword: '', confirmPassword: '' });
       fetchStaff();
-    } catch (e) { showError(e?.response?.data?.error || 'Failed to update credentials'); }
+    } catch (e) { showError(e?.response?.data?.error || t('common.error')); }
   };
 
   const handleToggleStatus = async (m) => {
     try {
       const newActive = m.isActive === false;
       await usersAPI.update(m.id, { isActive: newActive });
-      showSuccess(newActive ? 'Staff reactivated' : 'Staff suspended');
+      showSuccess(newActive ? t('admin.staff.staffReactivated') : t('admin.staff.staffSuspended'));
       fetchStaff();
-    } catch (e) { showError(e?.response?.data?.error || 'Failed to update status'); }
+    } catch (e) { showError(e?.response?.data?.error || t('common.error')); }
   };
 
 
@@ -459,10 +459,10 @@ const AdminStaff = () => {
   const handleClockIn = async (userId, status = 'present') => {
     try {
       await shiftsAPI.clockIn({ userId, status });
-      showSuccess(status === 'late' ? 'Clocked in as late' : t('admin.staff.clockedIn'));
+      showSuccess(status === 'late' ? t('admin.staff.clockedInAsLate') : t('admin.staff.clockedIn'));
       fetchTodayStatus();
       if (activeTab === 'attendance') fetchPeriodShifts();
-    } catch (e) { showError(e.message || 'Failed to clock in'); }
+    } catch (e) { showError(e.message || t('common.error')); }
   };
 
   const handleClockOut = async (userId) => {
@@ -471,7 +471,7 @@ const AdminStaff = () => {
       showSuccess(t('admin.staff.clockedOut'));
       fetchTodayStatus();
       if (activeTab === 'attendance') fetchPeriodShifts();
-    } catch (e) { showError(e.message || 'Failed to clock out'); }
+    } catch (e) { showError(e.message || t('common.error')); }
   };
 
   const handleMarkAbsent = async (userId) => {
@@ -480,7 +480,7 @@ const AdminStaff = () => {
       showSuccess(t('admin.staff.markedAbsent'));
       fetchTodayStatus();
       if (activeTab === 'attendance') fetchPeriodShifts();
-    } catch (e) { showError(e.message || 'Failed to mark absent'); }
+    } catch (e) { showError(e.message || t('common.error')); }
   };
 
   const handleManualClockIn = async () => {
@@ -544,7 +544,7 @@ const AdminStaff = () => {
           if (e.response?.status === 409 && e.response?.data?.existing_id) {
             body.date = editShiftData.date || attDate;
             await shiftsAPI.updateShift(e.response.data.existing_id, body);
-            showSuccess('Attendance updated');
+            showSuccess(t('admin.staff.attendanceUpdated'));
           } else { throw e; }
         }
       }
@@ -747,7 +747,7 @@ const AdminStaff = () => {
         {['All', 'waitress', 'kitchen', 'cashier'].map(role => (
           <button key={role} onClick={() => setSelectedRole(role)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedRole === role ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-            {role === 'All' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)} ({roleCounts[role] || 0})
+            {role === 'All' ? t('common.all') : role.charAt(0).toUpperCase() + role.slice(1)} ({roleCounts[role] || 0})
           </button>
         ))}
       </div>
@@ -777,7 +777,7 @@ const AdminStaff = () => {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${c.bg} ${c.text}`}>{m.role}</span>
                       <span className={`w-2 h-2 rounded-full ${isOnShift ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                      {m.isActive === false && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-500">SUSPENDED</span>}
+                      {m.isActive === false && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-500">{t('admin.staff.suspended')}</span>}
                     </div>
                   </div>
                 </div>
@@ -788,10 +788,10 @@ const AdminStaff = () => {
                     <p>{t('common.amount')}: <span className="text-gray-700 font-medium">{money(m.salary)} / {m.salaryType || m.salary_type || 'monthly'}</span></p>
                   )}
                   {(m.shiftStart || m.shift_start) && (
-                    <p>Shift: <span className="text-gray-700">{m.shiftStart || m.shift_start} - {m.shiftEnd || m.shift_end}</span></p>
+                    <p>{t('admin.staff.shift')}: <span className="text-gray-700">{m.shiftStart || m.shift_start} - {m.shiftEnd || m.shift_end}</span></p>
                   )}
                   {m.role === 'kitchen' && (m.kitchenStation || m.kitchen_station) && (
-                    <p>Station: <span className="text-gray-700 font-medium">{m.kitchenStation || m.kitchen_station}</span></p>
+                    <p>{t('admin.staff.station')}: <span className="text-gray-700 font-medium">{m.kitchenStation || m.kitchen_station}</span></p>
                   )}
                 </div>
                 {!['owner', 'admin'].includes(m.role) && (
@@ -801,7 +801,7 @@ const AdminStaff = () => {
                   </button>
                   <button onClick={() => { setSelectedStaff(m); setCredentialsData({ email: m.email || '', newPassword: '', confirmPassword: '' }); setShowPasswords({ new: false, confirm: false }); setShowCredentialsModal(true); }}
                     className="flex-1 min-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 flex items-center justify-center gap-1">
-                    <Key size={12} /> Login
+                    <Key size={12} /> {t('admin.staff.login')}
                   </button>
 
                   <button onClick={() => handleToggleStatus(m)}
@@ -972,13 +972,13 @@ const AdminStaff = () => {
                   {isClockedIn && (
                     <div className="bg-green-50 rounded-lg px-3 py-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">In: <strong className="text-gray-900">{fmtTime(info.clockIn)}</strong></span>
+                        <span className="text-gray-600">{t('admin.staff.in')}: <strong className="text-gray-900">{fmtTime(info.clockIn)}</strong></span>
                         <span className="text-green-600 font-semibold flex items-center gap-1">
                           <Timer size={13} /> {elapsedStr(info.clockIn)}
                         </span>
                       </div>
                       {info.lateMinutes > 0 && (
-                        <p className="text-[11px] text-yellow-600 mt-1">+{info.lateMinutes}min late</p>
+                        <p className="text-[11px] text-yellow-600 mt-1">{t('admin.staff.lateMins', { mins: info.lateMinutes })}</p>
                       )}
                     </div>
                   )}
@@ -986,12 +986,12 @@ const AdminStaff = () => {
                   {isDone && (
                     <div className="bg-blue-50 rounded-lg px-3 py-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">In: <strong>{fmtTime(info.clockIn)}</strong></span>
-                        <span className="text-gray-600">Out: <strong>{fmtTime(info.clockOut)}</strong></span>
+                        <span className="text-gray-600">{t('admin.staff.in')}: <strong>{fmtTime(info.clockIn)}</strong></span>
+                        <span className="text-gray-600">{t('admin.staff.out')}: <strong>{fmtTime(info.clockOut)}</strong></span>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[11px] text-green-600 font-medium">{parseFloat(info.hoursWorked || 0).toFixed(1)}h worked</span>
-                        {info.lateMinutes > 0 && <span className="text-[11px] text-yellow-600">+{info.lateMinutes}min late</span>}
+                        <span className="text-[11px] text-green-600 font-medium">{t('admin.staff.hoursWorked', { hours: parseFloat(info.hoursWorked || 0).toFixed(1) })}</span>
+                        {info.lateMinutes > 0 && <span className="text-[11px] text-yellow-600">{t('admin.staff.lateMins', { mins: info.lateMinutes })}</span>}
                       </div>
                     </div>
                   )}
@@ -1056,9 +1056,9 @@ const AdminStaff = () => {
                   <tr>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('common.name')}</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">In</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Out</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Hours</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('admin.staff.in')}</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('admin.staff.out')}</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('admin.staff.hours')}</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('common.status')}</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{t('common.actions')}</th>
                   </tr>
@@ -1070,7 +1070,7 @@ const AdminStaff = () => {
                     const st = (rec.status || '').toLowerCase();
                     return (
                       <tr key={rec.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 text-gray-900 font-medium">{m?.name || 'Unknown'}</td>
+                        <td className="px-4 py-2.5 text-gray-900 font-medium">{m?.name || '?'}</td>
                         <td className="px-4 py-2.5 text-gray-600">{rec.date || (rec.clockIn ? fmtDate(new Date(rec.clockIn)) : '-')}</td>
                         <td className="px-4 py-2.5 text-gray-600">{fmtTime(rec.clockIn || rec.clock_in)}</td>
                         <td className="px-4 py-2.5 text-gray-600">{fmtTime(rec.clockOut || rec.clock_out)}</td>
@@ -1109,7 +1109,7 @@ const AdminStaff = () => {
         {/* Non-trackable staff note */}
         {staff.filter(m => !TRACKABLE_ROLES.includes(m.role)).length > 0 && (
           <p className="text-xs text-gray-400 italic">
-            * Owner and Admin roles are excluded from attendance tracking
+            {t('admin.staff.ownerAdminExcluded')}
           </p>
         )}
       </div>
@@ -1152,7 +1152,7 @@ const AdminStaff = () => {
           )}
           <button onClick={fetchPayrollData}
             className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center gap-1.5">
-            <RefreshCw size={14} /> Refresh
+            <RefreshCw size={14} /> {t('common.refresh')}
           </button>
         </div>
 
@@ -1163,7 +1163,7 @@ const AdminStaff = () => {
               <FileText size={15} />{t('common.summary')}
             </span>
             <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-900 font-semibold">Due: {money(totalDue)}</span>
+              <span className="text-gray-900 font-semibold">{t('admin.staff.due')}: {money(totalDue)}</span>
               {showSummary ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
           </button>
@@ -1192,11 +1192,11 @@ const AdminStaff = () => {
                     <thead>
                       <tr className="bg-gray-50 text-left">
                         <th className="px-3 py-2 text-xs font-semibold text-gray-400">{t('common.name')}</th>
-                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">Present</th>
-                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">Late</th>
-                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">Absent</th>
-                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">Hours</th>
-                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">Rate</th>
+                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">{t('admin.staff.present')}</th>
+                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">{t('admin.staff.late')}</th>
+                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">{t('admin.staff.absent')}</th>
+                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">{t('admin.staff.hours')}</th>
+                        <th className="px-3 py-2 text-xs font-semibold text-center text-gray-500">{t('admin.staff.rate')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -1234,10 +1234,10 @@ const AdminStaff = () => {
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-600">{r.role}</span>
                         </div>
                         <div className="flex items-center gap-4 text-xs">
-                          <span className="text-gray-900 font-semibold">Net: {money(r.netPay)}</span>
-                          <span className="text-gray-600 font-semibold">Paid: {money(r.totalPaid)}</span>
+                          <span className="text-gray-900 font-semibold">{t('admin.staff.netLabel')}: {money(r.netPay)}</span>
+                          <span className="text-gray-600 font-semibold">{t('admin.staff.paidLabel')}: {money(r.totalPaid)}</span>
                           <span className={`font-semibold ${r.remaining > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                            Due: {money(Math.max(0, r.remaining))}
+                            {t('admin.staff.due')}: {money(Math.max(0, r.remaining))}
                           </span>
                         </div>
                       </div>
@@ -1304,7 +1304,7 @@ const AdminStaff = () => {
                         <p className="text-gray-800 font-bold">{r.lateDays}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-gray-400">Hours</p>
+                        <p className="text-gray-400">{t('admin.staff.hours')}</p>
                         <p className="text-gray-800 font-bold">{r.totalHours.toFixed(1)}</p>
                       </div>
                     </div>
@@ -1314,7 +1314,7 @@ const AdminStaff = () => {
                       const fullySettled = r.remaining <= 0 && (r.totalPaid > 0 || r.effectiveFrom > payrollDateTo);
                       return (
                         <div className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-center mb-3 ${fullySettled ? 'bg-green-50 text-green-700' : r.remaining > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'}`}>
-                          {fullySettled ? t('common.paid') : r.remaining > 0 ? `REMAINING: ${money(r.remaining)}` : t('common.noData')}
+                          {fullySettled ? t('common.paid') : r.remaining > 0 ? `${t('admin.staff.remaining')}: ${money(r.remaining)}` : t('common.noData')}
                         </div>
                       );
                     })()}
@@ -1365,11 +1365,11 @@ const AdminStaff = () => {
               { id: 'staff', label: t('admin.staff.staffList'), icon: Users },
               { id: 'attendance', label: t('admin.staff.attendanceShifts'), icon: Clock },
               { id: 'payroll', label: t('admin.staff.payrollPayments'), icon: DollarSign },
-            ].map(t => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`px-1 py-4 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
-                  activeTab === t.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                <t.icon size={16} /> {t.label}
+                  activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                <tab.icon size={16} /> {tab.label}
               </button>
             ))}
           </div>
@@ -1389,7 +1389,7 @@ const AdminStaff = () => {
           {/* Full Name */}
           <div>
             <label className={labelCls}>{t('admin.profile.fullName')} *</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="e.g. Aisha Karimova" />
+            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder={t('placeholders.egStaffName', 'e.g. Aisha Karimova')} />
           </div>
 
           {/* Role — pill buttons */}
@@ -1411,7 +1411,8 @@ const AdminStaff = () => {
 
           {/* Kitchen Station — only for Kitchen role */}
           {formData.role === 'kitchen' && (() => {
-            const allStations = [...KITCHEN_STATIONS, ...customStations];
+            const kitchenStations = getKitchenStations(t);
+            const allStations = [...kitchenStations, ...customStations];
             const typed = (formData.kitchenStation || '').trim();
             const alreadyPreset = allStations.some(s => s.id.toLowerCase() === typed.toLowerCase());
             const canAdd = typed.length > 0 && !alreadyPreset;
@@ -1421,7 +1422,7 @@ const AdminStaff = () => {
                 <div className="relative">
                   <input type="text" value={formData.kitchenStation}
                     onChange={e => setFormData({ ...formData, kitchenStation: e.target.value })}
-                    className={inputCls} placeholder="Type station name (or pick below)" />
+                    className={inputCls} placeholder={t('admin.staff.stationPlaceholder')} />
                   {formData.kitchenStation && (
                     <button type="button" onClick={() => setFormData({ ...formData, kitchenStation: '' })}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -1436,15 +1437,15 @@ const AdminStaff = () => {
                       try {
                         await menuAPI.addStation(typed);
                         await fetchCustomStations();
-                      } catch (e) { showError(e?.response?.data?.error || 'Failed to add station'); }
+                      } catch (e) { showError(e?.response?.data?.error || t('common.error')); }
                     }}
                       className="px-2.5 py-1 rounded-full text-xs font-medium border border-blue-400 text-blue-600 hover:bg-blue-50 flex items-center gap-1">
-                      <Plus size={12} /> Add &quot;{typed}&quot;
+                      <Plus size={12} /> {t('common.add')} &quot;{typed}&quot;
                     </button>
                   )}
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {KITCHEN_STATIONS.map(ks => {
+                  {kitchenStations.map(ks => {
                     const active = formData.kitchenStation?.toLowerCase() === ks.id.toLowerCase();
                     return (
                       <button key={ks.id} type="button"
@@ -1478,7 +1479,7 @@ const AdminStaff = () => {
                   })}
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  {formData.kitchenStation ? `Station: "${formData.kitchenStation}" — only sees matching orders` : 'No station — sees all kitchen orders'}
+                  {formData.kitchenStation ? t('admin.staff.stationHint', { station: formData.kitchenStation }) : t('admin.staff.noStationHint')}
                 </p>
               </div>
             );
@@ -1490,7 +1491,7 @@ const AdminStaff = () => {
             <PhoneInput
               value={formData.phone}
               onChange={phone => setFormData({ ...formData, phone })}
-              placeholder="12 345 67 89"
+              placeholder={t('placeholders.phoneShort', '12 345 67 89')}
             />
           </div>
 
@@ -1498,7 +1499,7 @@ const AdminStaff = () => {
           {!selectedStaff && (
             <div>
               <label className={labelCls}>{t('common.email')}</label>
-              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className={inputCls} placeholder="email" />
+              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className={inputCls} placeholder={t('placeholders.email', 'email')} />
             </div>
           )}
 
@@ -1506,18 +1507,18 @@ const AdminStaff = () => {
           {!selectedStaff && (
             <div>
               <label className={labelCls}>{t('common.password')} *</label>
-              <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className={inputCls} placeholder="Set login password" />
+              <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className={inputCls} placeholder={t('admin.staff.setLoginPassword')} />
             </div>
           )}
 
           {/* Shift Start / End */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Shift Start</label>
+              <label className={labelCls}>{t('admin.staff.shiftStart')}</label>
               <input type="time" value={formData.shiftStart} onChange={e => setFormData({ ...formData, shiftStart: e.target.value })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Shift End</label>
+              <label className={labelCls}>{t('admin.staff.shiftEnd')}</label>
               <input type="time" value={formData.shiftEnd} onChange={e => setFormData({ ...formData, shiftEnd: e.target.value })} className={inputCls} />
             </div>
           </div>
@@ -1541,8 +1542,8 @@ const AdminStaff = () => {
 
           {/* Rate — dynamic label */}
           <div>
-            <label className={labelCls}>Rate (so'm) · {formData.salaryType.charAt(0).toUpperCase() + formData.salaryType.slice(1)}</label>
-            <input type="number" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} className={inputCls} placeholder="0" />
+            <label className={labelCls}>{t('admin.staff.rate')} (so'm) · {t(`admin.staff.salaryTypes.${formData.salaryType}`)}</label>
+            <input type="number" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} className={inputCls} placeholder={t('placeholders.zero', '0')} />
           </div>
         </div>
 
@@ -1558,10 +1559,10 @@ const AdminStaff = () => {
         <div className="space-y-3">
           {/* Email */}
           <div>
-            <label className={labelCls}>Email</label>
+            <label className={labelCls}>{t('common.email')}</label>
             <input type="email" value={credentialsData.email}
               onChange={e => setCredentialsData({ ...credentialsData, email: e.target.value })}
-              className={inputCls} placeholder="staff@example.com" />
+              className={inputCls} placeholder={t('placeholders.staffEmail', 'staff@example.com')} />
           </div>
 
           {/* New Password */}
@@ -1570,7 +1571,7 @@ const AdminStaff = () => {
             <div className="relative">
               <input type={showPasswords.new ? 'text' : 'password'} value={credentialsData.newPassword}
                 onChange={e => setCredentialsData({ ...credentialsData, newPassword: e.target.value })}
-                className={inputCls + ' pr-10'} placeholder="Enter new password" />
+                className={inputCls + ' pr-10'} placeholder={t('admin.staff.enterNewPassword')} />
               <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -1585,7 +1586,7 @@ const AdminStaff = () => {
               <input type={showPasswords.confirm ? 'text' : 'password'} value={credentialsData.confirmPassword}
                 onChange={e => setCredentialsData({ ...credentialsData, confirmPassword: e.target.value })}
                 className={`${inputCls} pr-10 ${credentialsData.confirmPassword && credentialsData.newPassword !== credentialsData.confirmPassword ? 'border-red-400 focus:ring-red-400' : ''}`}
-                placeholder="Re-enter new password" />
+                placeholder={t('admin.staff.reEnterPassword')} />
               <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -1613,13 +1614,13 @@ const AdminStaff = () => {
         <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl mb-4">
           <AlertTriangle size={22} className="text-red-500 shrink-0" />
           <div>
-            <p className="font-semibold text-gray-900">Delete {selectedStaff?.name}?</p>
+            <p className="font-semibold text-gray-900">{t('admin.staff.deleteConfirmName', { name: selectedStaff?.name })}</p>
             <p className="text-xs text-gray-500">{t('common.actionCannotBeUndone')}</p>
           </div>
         </div>
         <div className="flex gap-3">
           <button onClick={() => setShowDeleteModal(false)} className={btnCancel}>{t("common.cancel")}</button>
-          <button onClick={handleDeleteStaff} className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600">Delete</button>
+          <button onClick={handleDeleteStaff} className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600">{t('common.delete')}</button>
         </div>
       </Modal>
 
@@ -1630,8 +1631,8 @@ const AdminStaff = () => {
             <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl mb-5">
               <CheckCircle size={22} className="text-green-600 shrink-0" />
               <div>
-                <p className="font-semibold text-gray-900">{newStaffInfo.name} has been added</p>
-                <p className="text-xs text-gray-500">Share these login credentials with the new staff member</p>
+                <p className="font-semibold text-gray-900">{newStaffInfo.name} {t('admin.staff.hasBeenAdded')}</p>
+                <p className="text-xs text-gray-500">{t('admin.staff.shareCredentials')}</p>
               </div>
             </div>
             <div className="space-y-3 mb-5">
@@ -1648,7 +1649,7 @@ const AdminStaff = () => {
                 <span className="text-sm font-semibold text-gray-900">{money(newStaffInfo.salary)} / {newStaffInfo.salaryType}</span>
               </div>
               <div className="flex justify-between py-2.5 px-3 bg-gray-50 rounded-lg">
-                <span className="text-xs text-gray-500 font-medium">Shift</span>
+                <span className="text-xs text-gray-500 font-medium">{t('admin.staff.shift')}</span>
                 <span className="text-sm font-semibold text-gray-900">{newStaffInfo.shiftStart} – {newStaffInfo.shiftEnd}</span>
               </div>
               <div className="h-px bg-gray-200 my-1" />
@@ -1676,8 +1677,8 @@ const AdminStaff = () => {
         <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl mb-4">
           <AlertTriangle size={22} className="text-red-500 shrink-0" />
           <div>
-            <p className="font-semibold text-gray-900">Delete &quot;{stationToDelete?.label}&quot;?</p>
-            <p className="text-xs text-gray-500">This will remove the station from the quick pick list.</p>
+            <p className="font-semibold text-gray-900">{t('admin.staff.deleteConfirmName', { name: stationToDelete?.label })}</p>
+            <p className="text-xs text-gray-500">{t('admin.staff.deleteStationHint')}</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -1691,11 +1692,11 @@ const AdminStaff = () => {
               if (formData.kitchenStation?.toLowerCase() === cs.id.toLowerCase()) {
                 setFormData({ ...formData, kitchenStation: '' });
               }
-              showSuccess('Station deleted');
+              showSuccess(t('admin.staff.stationDeleted'));
             } catch (err) {
-              showError(err?.response?.data?.error || 'Cannot delete -- station may be assigned to staff');
+              showError(err?.response?.data?.error || t('admin.staff.cannotDeleteStation'));
             }
-          }} className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600">Delete</button>
+          }} className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600">{t('common.delete')}</button>
         </div>
       </Modal>
 
@@ -1748,11 +1749,11 @@ const AdminStaff = () => {
               {needsTime && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelCls}>Clock In</label>
+                    <label className={labelCls}>{t('admin.staff.clockInLabel')}</label>
                     <input type="time" value={editShiftData.clockIn} onChange={e => setEditShiftData({ ...editShiftData, clockIn: e.target.value })} className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>Clock Out</label>
+                    <label className={labelCls}>{t('admin.staff.clockOutLabel')}</label>
                     <input type="time" value={editShiftData.clockOut} onChange={e => setEditShiftData({ ...editShiftData, clockOut: e.target.value })} className={inputCls} />
                   </div>
                 </div>
@@ -1762,7 +1763,7 @@ const AdminStaff = () => {
               <div>
                 <label className={labelCls}>{t('common.notes')}</label>
                 <textarea value={editShiftData.note} onChange={e => setEditShiftData({ ...editShiftData, note: e.target.value })}
-                  className={inputCls + ' min-h-[60px] resize-none'} placeholder="e.g. Doctor's appointment, adjusted hours..." rows={2} />
+                  className={inputCls + ' min-h-[60px] resize-none'} placeholder={t('placeholders.egPosition', 'e.g. Doctor')} rows={2} />
               </div>
 
               {/* Actions */}
@@ -1781,7 +1782,7 @@ const AdminStaff = () => {
       <Modal open={showPaymentModal} onClose={() => setShowPaymentModal(false)} title={payTarget ? `${t('admin.staff.recordPayment')} - ${payTarget.name}` : t('admin.staff.recordPayment')}>
         <div className="space-y-3">
           {!payTarget && (
-            <div><label className={labelCls}>Staff Member</label>
+            <div><label className={labelCls}>{t('admin.staff.staffMember')}</label>
               <Dropdown value="" onChange={v => {
                 const m = staff.find(s => String(s.id) === String(v));
                 if (m) setPayTarget(m);
@@ -1789,18 +1790,18 @@ const AdminStaff = () => {
           )}
           {payTarget && (
             <div className="bg-blue-50 rounded-lg p-3 text-sm">
-              <p className="text-gray-600">Net Pay: <strong className="text-gray-900">{money(payTarget.netPay || 0)}</strong></p>
+              <p className="text-gray-600">{t('admin.staff.netPay')}: <strong className="text-gray-900">{money(payTarget.netPay || 0)}</strong></p>
               {payTarget.remaining !== undefined && (
-                <p className="text-gray-600">Remaining: <strong className={payTarget.remaining > 0 ? 'text-red-600' : 'text-green-600'}>{money(payTarget.remaining)}</strong></p>
+                <p className="text-gray-600">{t('admin.staff.remaining')}: <strong className={payTarget.remaining > 0 ? 'text-red-600' : 'text-green-600'}>{money(payTarget.remaining)}</strong></p>
               )}
             </div>
           )}
           <div><label className={labelCls}>{t('common.amount')}</label><input type="number" value={paymentFormData.amount} onChange={e => setPaymentFormData({ ...paymentFormData, amount: e.target.value })} className={inputCls} placeholder="0" /></div>
           <div><label className={labelCls}>{t('cashier.orders.paymentMethod')}</label>
             <Dropdown value={paymentFormData.method} onChange={v => setPaymentFormData({ ...paymentFormData, method: v })}
-              options={[{ value: 'Cash', label: 'Cash' }, { value: 'Bank Transfer', label: 'Bank Transfer' }, { value: 'Card', label: 'Card' }, { value: 'Check', label: 'Check' }]} /></div>
-          <div><label className={labelCls}>Note</label><input type="text" value={paymentFormData.note} onChange={e => setPaymentFormData({ ...paymentFormData, note: e.target.value })} className={inputCls} placeholder="Optional" /></div>
-          <div><label className={labelCls}>Date</label><DatePicker value={paymentFormData.date} onChange={v => setPaymentFormData({ ...paymentFormData, date: v })} size="sm" /></div>
+              options={[{ value: 'Cash', label: t('paymentMethods.cash') }, { value: 'Bank Transfer', label: t('paymentMethods.bankTransfer') }, { value: 'Card', label: t('paymentMethods.card') }, { value: 'Check', label: t('paymentMethods.check') }]} /></div>
+          <div><label className={labelCls}>{t('admin.staff.note')}</label><input type="text" value={paymentFormData.note} onChange={e => setPaymentFormData({ ...paymentFormData, note: e.target.value })} className={inputCls} placeholder={t('admin.staff.optional')} /></div>
+          <div><label className={labelCls}>{t('common.date')}</label><DatePicker value={paymentFormData.date} onChange={v => setPaymentFormData({ ...paymentFormData, date: v })} size="sm" /></div>
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={() => setShowPaymentModal(false)} className={btnCancel}>{t("common.cancel")}</button>
@@ -1809,7 +1810,7 @@ const AdminStaff = () => {
       </Modal>
 
       {/* ── DETAILS MODAL ────────────────────────────────────────────────── */}
-      <Modal open={showDetailsModal && !!detailsTarget} onClose={() => setShowDetailsModal(false)} title={`Payroll Details`} wide>
+      <Modal open={showDetailsModal && !!detailsTarget} onClose={() => setShowDetailsModal(false)} title={t('admin.staff.payrollDetails')} wide>
         {detailsTarget && (() => {
           const r = detailsTarget;
           const excusedDays = r.shifts ? r.shifts.filter(s => ['excused','Excused'].includes(s.status)).length : 0;
@@ -1820,10 +1821,10 @@ const AdminStaff = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xl font-bold">{r.name}</h3>
-                    <p className="text-blue-200 text-sm mt-0.5">{(r.salaryType || 'monthly').charAt(0).toUpperCase() + (r.salaryType || 'monthly').slice(1)} Salary — {payrollDateFrom} to {payrollDateTo}</p>
+                    <p className="text-blue-200 text-sm mt-0.5">{t(`admin.staff.salaryTypes.${r.salaryType || 'monthly'}`)} {t('admin.staff.salaryLabel')} -- {payrollDateFrom} to {payrollDateTo}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-blue-200 text-xs font-medium">Net Pay</p>
+                    <p className="text-blue-200 text-xs font-medium">{t('admin.staff.netPayHeader')}</p>
                     <p className="text-2xl font-extrabold">{money(r.netPay)}</p>
                   </div>
                 </div>
@@ -1833,22 +1834,22 @@ const AdminStaff = () => {
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
                     <Check size={13} className="text-green-300" />
                     <span className="text-sm font-semibold">{r.presentDays}</span>
-                    <span className="text-blue-200 text-xs">Present</span>
+                    <span className="text-blue-200 text-xs">{t('admin.staff.present')}</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
                     <XCircle size={13} className="text-red-300" />
                     <span className="text-sm font-semibold">{r.absentDays}</span>
-                    <span className="text-blue-200 text-xs">Absent</span>
+                    <span className="text-blue-200 text-xs">{t('admin.staff.absent')}</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
                     <Clock size={13} className="text-yellow-300" />
                     <span className="text-sm font-semibold">{r.lateDays}</span>
-                    <span className="text-blue-200 text-xs">Late</span>
+                    <span className="text-blue-200 text-xs">{t('admin.staff.late')}</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
                     <AlertCircle size={13} className="text-purple-300" />
                     <span className="text-sm font-semibold">{excusedDays}</span>
-                    <span className="text-blue-200 text-xs">Excused</span>
+                    <span className="text-blue-200 text-xs">{t('admin.staff.excused')}</span>
                   </div>
                 </div>
               </div>
@@ -1858,31 +1859,31 @@ const AdminStaff = () => {
                 {/* Left: Salary Breakdown */}
                 <div className="border border-gray-200 rounded-xl p-4">
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <DollarSign size={13} /> Salary Breakdown
+                    <DollarSign size={13} /> {t('admin.staff.salaryBreakdown')}
                   </h4>
                   <div className="space-y-2.5 text-sm">
                     {r.salaryType === 'hourly' && (<>
-                      <div className="flex justify-between"><span className="text-gray-500">Hourly Rate</span><span className="font-medium text-gray-900">{money(r.baseSalary)} / hr</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Hours Worked</span><span className="font-medium text-gray-900">{r.totalHours.toFixed(1)} hrs</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.hourlyRate')}</span><span className="font-medium text-gray-900">{money(r.baseSalary)} / hr</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.hoursWorkedLabel')}</span><span className="font-medium text-gray-900">{r.totalHours.toFixed(1)} hrs</span></div>
                     </>)}
                     {r.salaryType === 'daily' && (<>
-                      <div className="flex justify-between"><span className="text-gray-500">Daily Rate</span><span className="font-medium text-gray-900">{money(r.baseSalary)} / day</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Days Present</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.dailyRate')}</span><span className="font-medium text-gray-900">{money(r.baseSalary)} / day</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.daysPresent')}</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
                     </>)}
                     {r.salaryType === 'weekly' && (<>
-                      <div className="flex justify-between"><span className="text-gray-500">Weekly Salary</span><span className="font-medium text-gray-900">{money(r.baseSalary)}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Daily Rate</span><span className="font-medium text-gray-900">{money(Math.round(r.baseSalary / 6))} / day</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Days Present</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.weeklySalary')}</span><span className="font-medium text-gray-900">{money(r.baseSalary)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.dailyRate')}</span><span className="font-medium text-gray-900">{money(Math.round(r.baseSalary / 6))} / day</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.daysPresent')}</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
                     </>)}
                     {r.salaryType === 'monthly' && (<>
-                      <div className="flex justify-between"><span className="text-gray-500">Monthly Salary</span><span className="font-medium text-gray-900">{money(r.baseSalary)}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Working Days</span><span className="font-medium text-gray-900">{r.workingDays} days</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Daily Rate</span><span className="font-medium text-gray-900">{money(Math.round(r.baseSalary / r.workingDays))} / day</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Days Present</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.monthlySalary')}</span><span className="font-medium text-gray-900">{money(r.baseSalary)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.workingDays')}</span><span className="font-medium text-gray-900">{r.workingDays} days</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.dailyRate')}</span><span className="font-medium text-gray-900">{money(Math.round(r.baseSalary / r.workingDays))} / day</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">{t('admin.staff.daysPresent')}</span><span className="font-medium text-gray-900">{r.daysWorked}</span></div>
                     </>)}
                     <div className="border-t border-gray-100 pt-2 mt-1">
                       <div className="flex justify-between font-semibold">
-                        <span className="text-gray-700">Base Pay</span>
+                        <span className="text-gray-700">{t('admin.staff.basePay')}</span>
                         <span className="text-gray-900">{money(r.grossPay)}</span>
                       </div>
                     </div>
@@ -1893,7 +1894,7 @@ const AdminStaff = () => {
                 <div className="border border-gray-200 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <CreditCard size={13} /> Payments
+                      <CreditCard size={13} /> {t('admin.staff.payments')}
                     </h4>
                     <button onClick={() => {
                       setPayTarget(r);
@@ -1901,14 +1902,14 @@ const AdminStaff = () => {
                       setShowDetailsModal(false);
                       setShowPaymentModal(true);
                     }} className="flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors">
-                      <Plus size={12} /> Add
+                      <Plus size={12} /> {t('common.add')}
                     </button>
                   </div>
 
                   {(!r.payments || r.payments.length === 0) ? (
                     <div className="flex flex-col items-center justify-center py-6 text-gray-300">
                       <Banknote size={28} className="mb-2" />
-                      <p className="text-sm">No payments yet</p>
+                      <p className="text-sm">{t('admin.staff.noPaymentsYet')}</p>
                     </div>
                   ) : (() => {
                     const ef = r.effectiveFrom || payrollDateFrom;
@@ -1929,9 +1930,9 @@ const AdminStaff = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className={`font-bold text-sm ${isSettled ? 'text-gray-500' : 'text-blue-600'}`}>{money(p.amount)}</span>
-                          {isSettled && <span className="ml-1.5 text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">settled</span>}
+                          {isSettled && <span className="ml-1.5 text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{t('admin.staff.settled')}</span>}
                           <p className="text-xs text-gray-400 truncate">
-                            {(p.paymentDate || p.payment_date || '').split('T')[0]} · {p.paymentMethod || p.payment_method || 'Cash'}
+                            {(p.paymentDate || p.payment_date || '').split('T')[0]} · {p.paymentMethod || p.payment_method || t('payment.cash', 'Cash')}
                           </p>
                           {(p.note || p.notes) && <p className="text-xs text-gray-400 italic truncate">"{p.note || p.notes}"</p>}
                         </div>
@@ -1941,21 +1942,21 @@ const AdminStaff = () => {
                               setPayTarget(r);
                               setPaymentFormData({
                                 amount: String(parseFloat(p.amount) || 0),
-                                method: p.paymentMethod || p.payment_method || 'Cash',
+                                method: p.paymentMethod || p.payment_method || t('payment.cash', 'Cash'),
                                 note: p.note || '',
                                 date: (p.paymentDate || p.payment_date || '').split('T')[0] || getToday(),
                               });
                               setShowDetailsModal(false);
                               setShowPaymentModal(true);
-                            }} className="p-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors" title="Edit">
+                            }} className="p-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors" title={t('common.edit')}>
                               <Edit2 size={12} />
                             </button>
                             <button onClick={() => {
-                              if (confirm(`Delete ${money(p.amount)} payment?`)) {
+                              if (confirm(t('admin.staff.deletePaymentConfirm', { amount: money(p.amount) }))) {
                                 handleDeletePayment(p.id || p.paymentId);
                                 setShowDetailsModal(false);
                               }
-                            }} className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors" title="Delete">
+                            }} className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors" title={t('common.delete')}>
                               <Trash2 size={12} />
                             </button>
                           </div>
@@ -1966,7 +1967,7 @@ const AdminStaff = () => {
                     <div className="space-y-2">
                       {settledPmts.map(p => renderPayment(p, true))}
                       {currentPmts.length === 0 && settledPmts.length > 0 && (
-                        <p className="text-xs text-gray-400 text-center py-1">No new payments for current period</p>
+                        <p className="text-xs text-gray-400 text-center py-1">{t('admin.staff.noNewPayments')}</p>
                       )}
                       {currentPmts.map(p => renderPayment(p, false))}
                     </div>
@@ -1987,16 +1988,16 @@ const AdminStaff = () => {
                     return (
                       <div className={`rounded-lg p-3 mt-3 text-sm ${displayRemaining <= 0 && displayTotal > 0 ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500 text-xs font-medium">Total Paid</span>
+                          <span className="text-gray-500 text-xs font-medium">{t('admin.staff.totalPaid')}</span>
                           <span className="font-bold text-green-600">{money(displayTotal)}</span>
                         </div>
                         <div className="flex justify-between items-center mt-1">
-                          <span className="text-gray-500 text-xs font-medium">Remaining</span>
+                          <span className="text-gray-500 text-xs font-medium">{t('admin.staff.remaining')}</span>
                           <span className={`font-bold ${displayRemaining > 0 ? 'text-orange-500' : 'text-green-600'}`}>{money(Math.max(0, displayRemaining))}</span>
                         </div>
                         {displayRemaining <= 0 && displayTotal > 0 && (
                           <div className="flex items-center justify-center gap-1 mt-2 text-green-600 text-xs font-semibold">
-                            <CheckCircle size={13} /> Fully Paid
+                            <CheckCircle size={13} /> {t('admin.staff.fullyPaid')}
                           </div>
                         )}
                       </div>
@@ -2009,23 +2010,23 @@ const AdminStaff = () => {
               <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Calendar size={13} /> Attendance Records
+                    <Calendar size={13} /> {t('admin.staff.attendanceRecords')}
                   </h4>
                 </div>
                 {(!r.shifts || r.shifts.length === 0) ? (
                   <div className="flex flex-col items-center justify-center py-8 text-gray-300">
                     <Calendar size={28} className="mb-2" />
-                    <p className="text-sm">No records in this period</p>
+                    <p className="text-sm">{t('admin.staff.noRecordsInPeriod')}</p>
                   </div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 text-left">
-                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">Date</th>
-                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">Clock In</th>
-                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">Clock Out</th>
-                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">Hours</th>
-                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">Status</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">{t('common.date')}</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">{t('admin.staff.clockInLabel')}</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">{t('admin.staff.clockOutLabel')}</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">{t('admin.staff.hours')}</th>
+                        <th className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase">{t('common.status')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -2055,7 +2056,7 @@ const AdminStaff = () => {
               {/* Close button */}
               <div className="flex justify-end pt-1">
                 <button onClick={() => setShowDetailsModal(false)} className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                  Close
+                  {t('common.close')}
                 </button>
               </div>
             </div>

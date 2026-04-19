@@ -16,24 +16,24 @@ import { useTranslation } from '../../context/LanguageContext';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const C = '#0891B2';          // Cashier cyan
 const SUCCESS = '#16A34A';
-const DISC_REASONS = ['Manager Approved', 'Loyalty Customer', 'Complaint Resolution', 'Other'];
+// DISC_REASONS loaded from i18n: t('cashier.orders.discountReasons')
 const TAB_KEYS = ['allActive', 'restaurantOrders', 'requested', 'toGo', 'delivery'];
 const METHODS = [
-  { id: 'Cash',    icon: Banknote,  label: 'Cash'    },
-  { id: 'Card',    icon: CreditCard,label: 'Card'    },
-  { id: 'QR Code', icon: QrCode,    label: 'QR Code' },
-  { id: 'Loan',    icon: Wallet,    label: 'Loan'    },
+  { id: 'Cash',    icon: Banknote,  tKey: 'paymentMethods.cash'    },
+  { id: 'Card',    icon: CreditCard,tKey: 'paymentMethods.card'    },
+  { id: 'QR Code', icon: QrCode,    tKey: 'paymentMethods.qrCode' },
+  { id: 'Loan',    icon: Wallet,    tKey: 'paymentMethods.loan'    },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const money = (n) => Number(n || 0).toLocaleString('uz-UZ') + " so'm";
 
-const elapsed = (iso) => {
+const elapsed = (iso, t) => {
   if (!iso) return '—';
   const diff = Math.floor((Date.now() - new Date(iso)) / 60000);
-  if (diff < 1)  return 'just now';
-  if (diff < 60) return `${diff}m ago`;
-  return `${Math.floor(diff / 60)}h ${diff % 60}m ago`;
+  if (diff < 1)  return t('time.justNow');
+  if (diff < 60) return t('time.minAgo', { count: diff });
+  return t('time.hoursAgo', { h: Math.floor(diff / 60), m: diff % 60 });
 };
 
 const fmtOrderNum = (o) => {
@@ -88,28 +88,28 @@ function BillToast({ msg, visible }) {
 
 function StatCard({ label, value, sub, color, icon: Icon }) {
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex-1 min-w-0 overflow-hidden"
-      style={{ borderTop: `3px solid ${color}` }}>
-      <div className="flex items-start justify-between mb-1">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-        {Icon && (
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: color + '1A' }}>
-            <Icon className="w-3.5 h-3.5" style={{ color }} />
-          </div>
-        )}
+    <div className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-100 flex-1 min-w-0 overflow-hidden flex items-center gap-3"
+      style={{ borderLeft: `3px solid ${color}` }}>
+      {Icon && (
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: color + '1A' }}>
+          <Icon className="w-4 h-4" style={{ color }} />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide leading-tight truncate">{label}</p>
+        <div className="flex items-baseline gap-1">
+          <p className="text-lg font-extrabold leading-none" style={{ color }}>{value}</p>
+          {sub && <p className="text-[10px] text-gray-400 leading-none">{sub}</p>}
+        </div>
       </div>
-      <p className="text-2xl font-extrabold" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
 }
 
 // ─── Loan Date Picker ─────────────────────────────────────────────────────────
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS   = ['Mo','Tu','We','Th','Fr','Sa','Su'];
-
 function LoanDatePicker({ value, onChange, onClose }) {
+  const { t } = useTranslation();
   const now = new Date();
   const [yr,  setYr]  = useState(now.getFullYear());
   const [mo,  setMo]  = useState(now.getMonth());
@@ -132,13 +132,13 @@ function LoanDatePicker({ value, onChange, onClose }) {
         <button onClick={prevMo} className="p-1 hover:bg-gray-100 rounded-lg">
           <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <span className="text-sm font-bold text-gray-800">{MONTHS[mo]} {yr}</span>
+        <span className="text-sm font-bold text-gray-800">{t('datePicker.months')[mo]} {yr}</span>
         <button onClick={nextMo} className="p-1 hover:bg-gray-100 rounded-lg">
           <ChevronRight className="w-4 h-4 text-gray-600" />
         </button>
       </div>
       <div className="grid grid-cols-7 mb-1">
-        {DAYS.map(d => <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>)}
+        {t('datePicker.days').map(d => <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-y-0.5">
         {cells.map((ds, i) => {
@@ -183,10 +183,10 @@ function ReceiptModal({ order, payment, restSettings, taxSettings, user, onClose
           {/* Header */}
           <div className="text-center mb-4 pb-4 border-b border-dashed border-gray-200">
             <p className="font-extrabold text-gray-900 text-base">
-              {restSettings?.restaurantName || 'The Bill Restaurant'}
+              {restSettings?.restaurantName || t('common.brandRestaurant', 'The Bill Restaurant')}
             </p>
             <p className="text-sm text-gray-500 mt-0.5">
-              {fmtOrderNum(order)} · {order.tableName || order.customerName || 'Walk-in'}
+              {fmtOrderNum(order)} · {order.tableName || order.customerName || t('cashier.orders.walkIn')}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">{fmtDate(new Date())}</p>
           </div>
@@ -212,13 +212,13 @@ function ReceiptModal({ order, payment, restSettings, taxSettings, user, onClose
             </div>
             {payment.tax > 0 && (
               <div className="flex justify-between text-sm text-gray-500">
-                <span>Tax ({taxSettings?.taxRate ?? 0}%)</span>
+                <span>{t('cashier.orders.tax')} ({taxSettings?.taxRate ?? 0}%)</span>
                 <span>{money(payment.tax)}</span>
               </div>
             )}
             {payment.svc > 0 && (
               <div className="flex justify-between text-sm text-gray-500">
-                <span>Service ({restSettings?.serviceChargeRate ?? 0}%)</span>
+                <span>{t('cashier.orders.service')} ({restSettings?.serviceChargeRate ?? 0}%)</span>
                 <span>{money(payment.svc)}</span>
               </div>
             )}
@@ -260,7 +260,7 @@ function ReceiptModal({ order, payment, restSettings, taxSettings, user, onClose
           </div>
 
           <p className="text-center text-xs text-gray-400 mt-4 italic">
-            {restSettings?.receiptHeader || 'Thank you for dining with us!'}
+            {restSettings?.receiptHeader || t('cashier.orders.thankYou')}
           </p>
         </div>
 
@@ -314,7 +314,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
   useEffect(() => {
     ordersAPI.getById(order.id)
       .then(d => setFull(d))
-      .catch(() => setErr('Could not load order'))
+      .catch(() => setErr(t('cashier.orders.couldNotLoadOrder')))
       .finally(() => setLoading(false));
   }, [order.id]);
 
@@ -381,7 +381,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       setShowPayModal(false);
       onPaid({ order: { ...(full || order) }, payment: { method: payForm.paymentMethod, total: getTotalToPay(payForm), discount: discAmt } });
     } catch (e) {
-      setErr(e?.error || e?.message || 'Payment failed. Please try again.');
+      setErr(e?.error || e?.message || t('cashier.orders.paymentFailed'));
     } finally {
       setPaying(false);
     }
@@ -398,8 +398,8 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
   const isToGo  = (full?.orderType || order.orderType) === 'to_go' || (full?.orderType || order.orderType) === 'takeaway';
   const isDeli  = (full?.orderType || order.orderType) === 'delivery';
   const dname   = isToGo || isDeli
-    ? (full?.customerName || order.customerName || 'Walk-in')
-    : (full?.tableName    || order.tableName    || 'Walk-in');
+    ? (full?.customerName || order.customerName || t('cashier.orders.walkIn'))
+    : (full?.tableName    || order.tableName    || t('cashier.orders.walkIn'));
 
   // Partial-ready
   const readyCount = items.filter(i => i.itemReady).length;
@@ -412,7 +412,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
 
   // ── Print handler ─────────────────────────────────────────────────────────
   const handlePrintCheck = () => {
-    const restaurantName = restSettings?.restaurantName || 'The Bill Restaurant';
+    const restaurantName = restSettings?.restaurantName || t('common.brandRestaurant', 'The Bill Restaurant');
     const receiptInner = `
       <div class="center">
         <div class="rest-name">${restaurantName}</div>
@@ -426,15 +426,15 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
         return `<div class="row"><span class="row-label">${it.name || it.menuItemName || '—'} × ${q}</span><span>${money(p * q)}</span></div>`;
       }).join('')}
       <div class="dashed"></div>
-      <div class="row"><span>Subtotal</span><span>${money(orderTotal)}</span></div>
-      ${discAmt > 0 ? `<div class="row green"><span>Discount${pf.discReason ? ` (${pf.discReason})` : ''}</span><span>−${money(discAmt)}</span></div>` : ''}
+      <div class="row"><span>${t('common.subtotal')}</span><span>${money(orderTotal)}</span></div>
+      ${discAmt > 0 ? `<div class="row green"><span>${t('common.discount')}${pf.discReason ? ` (${pf.discReason})` : ''}</span><span>−${money(discAmt)}</span></div>` : ''}
       <div class="dashed"></div>
-      <div class="row total-row"><span>TOTAL</span><span>${money(totalToPay)}</span></div>
+      <div class="row total-row"><span>${t('cashier.orders.receiptTotal')}</span><span>${money(totalToPay)}</span></div>
       <div class="dashed"></div>
-      <div class="row"><span>Method</span><span>${(pf.paymentMethod || 'cash').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
-      ${pf.paymentMethod === 'cash' && change > 0 ? `<div class="row"><span>Change</span><span>${money(change)}</span></div>` : ''}
+      <div class="row"><span>${t('cashier.orders.method')}</span><span>${(pf.paymentMethod || 'cash').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
+      ${pf.paymentMethod === 'cash' && change > 0 ? `<div class="row"><span>${t('cashier.orders.change')}</span><span>${money(change)}</span></div>` : ''}
       <div class="dashed"></div>
-      <div class="center footer">${restSettings?.receiptHeader || 'Thank you for dining with us!'}</div>`;
+      <div class="center footer">${restSettings?.receiptHeader || t('cashier.orders.thankYou')}</div>`;
     printReceipt({
       restaurantName,
       orderNum: fmtOrderNum(order),
@@ -451,16 +451,16 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       total: money(totalToPay),
       method: (pf.paymentMethod || 'cash').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
       change: change > 0 ? money(change) : undefined,
-      footer: restSettings?.receiptHeader || 'Thank you for dining with us!',
+      footer: restSettings?.receiptHeader || t('cashier.orders.thankYou'),
       browserHtml: receiptInner,
     });
   };
 
   const PAY_METHODS = [
-    { key: 'cash',    label: 'Cash',    Icon: Banknote   },
-    { key: 'card',    label: 'Card',    Icon: CreditCard },
-    { key: 'qr_code', label: 'QR Code', Icon: Grid3X3    },
-    { key: 'loan',    label: 'Loan',    Icon: User       },
+    { key: 'cash',    label: t('paymentMethods.cash'),    Icon: Banknote   },
+    { key: 'card',    label: t('paymentMethods.card'),    Icon: CreditCard },
+    { key: 'qr_code', label: t('paymentMethods.qrCode'), Icon: Grid3X3    },
+    { key: 'loan',    label: t('paymentMethods.loan'),    Icon: User       },
   ];
 
   return (
@@ -533,7 +533,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{t('cashier.orders.orderDetails')}</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div><span className="text-gray-400">{t('admin.menu.itemType')}: </span><span className="font-medium text-gray-800">{isDeli ? t('orderTypes.delivery') : isToGo ? t('orderTypes.toGo') : t('orderTypes.dineIn')}</span></div>
-                <div><span className="text-gray-400">{t('common.date')}: </span><span className="font-medium text-gray-800">{elapsed(full?.createdAt || order.createdAt)}</span></div>
+                <div><span className="text-gray-400">{t('common.date')}: </span><span className="font-medium text-gray-800">{elapsed(full?.createdAt || order.createdAt, t)}</span></div>
                 {full?.waitressName && <div><span className="text-gray-400">{t('roles.waitress')}: </span><span className="font-medium text-gray-800">{full.waitressName}</span></div>}
                 {full?.guestCount > 0 && <div><span className="text-gray-400">{t('admin.newOrder.guests')}: </span><span className="font-medium text-gray-800">{full.guestCount}</span></div>}
                 {(isToGo || isDeli) && full?.customerPhone && <div className="col-span-2"><span className="text-gray-400">{t('common.phone')}: </span><span className="font-medium text-gray-800">{full.customerPhone}</span></div>}
@@ -571,10 +571,10 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       const orderItems  = items;
 
       const PMETHODS = [
-        { key: 'cash',    label: 'Cash',    Icon: Banknote   },
-        { key: 'card',    label: 'Card',    Icon: CreditCard },
-        { key: 'qr_code', label: 'QR Code', Icon: Grid3X3    },
-        { key: 'loan',    label: 'Loan',    Icon: User       },
+        { key: 'cash',    label: t('paymentMethods.cash'),    Icon: Banknote   },
+        { key: 'card',    label: t('paymentMethods.card'),    Icon: CreditCard },
+        { key: 'qr_code', label: t('paymentMethods.qrCode'), Icon: Grid3X3    },
+        { key: 'loan',    label: t('paymentMethods.loan'),    Icon: User       },
       ];
 
       return (
@@ -688,7 +688,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                           className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-700"
                         >
                           <option value="">{t('cashier.orders.selectReason')}</option>
-                          {DISC_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                          {t('cashier.orders.discountReasons').map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                       </div>
                     )}
@@ -822,7 +822,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('cashier.orders.customerName')}</p>
                         <input type="text" value={pf.loanName}
                           onChange={e => setPayForm({ ...pf, loanName: e.target.value })}
-                          placeholder="Name..."
+                          placeholder={t('cashier.orders.namePlaceholder')}
                           className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none" />
                       </div>
                       <div>
@@ -843,7 +843,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                   <textarea
                     value={pf.notes}
                     onChange={e => setPayForm({ ...pf, notes: e.target.value })}
-                    placeholder="Add payment notes..."
+                    placeholder={t('cashier.orders.addPaymentNotes')}
                     rows={2}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none resize-none"
                   />
@@ -874,7 +874,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                       ) : orderItems.map((item, idx) => (
                         <div key={idx} className="px-4 py-2.5 flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{item.name || item.menuItemName || 'Item'}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">{item.name || item.menuItemName || t('cashier.orders.item')}</p>
                             <p className="text-xs text-gray-400">{money(item.unitPrice || item.price || 0)} × {item.quantity || item.qty || 1}</p>
                           </div>
                           <span className="text-sm font-semibold text-gray-900 ml-3">
@@ -913,7 +913,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                     })()}
                     <div className="flex-1">
                       <span className="text-sm font-bold text-gray-900 capitalize">
-                        {pf.paymentMethod?.replace('_', ' ') || 'Cash'}
+                        {pf.paymentMethod?.replace('_', ' ') || t('payment.cash', 'Cash')}
                       </span>
                       {pf.splitWays && <span className="text-xs text-gray-400 ml-2">· {pf.splitWays} {t('cashier.orders.ways')}</span>}
                     </div>
@@ -947,7 +947,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                       <Printer className="w-3 h-3" />
                       {printerIp
                         ? <span style={{ color: '#374151', fontWeight: 500 }}>{printerIp}</span>
-                        : <span>No printer IP set</span>}
+                        : <span>{t('cashier.orders.noPrinterIp')}</span>}
                     </span>
                     <button
                       onClick={() => { setShowPrinterCfg(v => !v); setPrinterIpDraft(printerIp); }}
@@ -964,7 +964,7 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
                         value={printerIpDraft}
                         onChange={e => setPrinterIpDraft(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') { setPrinterIp(printerIpDraft.trim()); setShowPrinterCfg(false); } }}
-                        placeholder="192.168.1.100"
+                        placeholder={t('placeholders.ipAddress', '192.168.1.100')}
                         className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
                         style={{ '--tw-ring-color': C }}
                         autoFocus
@@ -1023,7 +1023,7 @@ export default function CashierOrders() {
   // Settings
   const [taxSettings,  setTaxSettings]  = useState({ taxRate: 0, taxEnabled: false });
   const [restSettings, setRestSettings] = useState({
-    restaurantName:       restaurant?.name || 'The Bill Restaurant',
+    restaurantName:       restaurant?.name || t('common.brandRestaurant', 'The Bill Restaurant'),
     receiptHeader:        'Thank you for dining with us!',
     serviceChargeRate:    0,
     serviceChargeEnabled: false,
@@ -1074,7 +1074,7 @@ export default function CashierOrders() {
       }
       prevBillIds.current = new Set(requested.map(o => o.id));
     } catch (e) {
-      if (!silent) setError(e?.error || e?.message || 'Failed to load orders');
+      if (!silent) setError(e?.error || e?.message || t('alerts.failedLoadOrders', 'Failed to load orders'));
     } finally {
       if (!silent) setLoading(false);
     }
@@ -1165,7 +1165,7 @@ export default function CashierOrders() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold text-gray-900">{t('cashier.orders.title')}</h1>
-              <p className="text-sm text-gray-500">{orders.length} active order{orders.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-gray-500">{t('cashier.orders.activeOrderCount', { count: orders.length })}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1182,21 +1182,29 @@ export default function CashierOrders() {
         </div>
 
         {/* Stats */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-3 mb-4">
           <StatCard label={t('cashier.orders.pendingCount')}    value={stats.pending}    color="#D97706" icon={ShoppingBag} />
           <StatCard label={t('cashier.orders.doneToday')} value={stats.doneToday}  color={SUCCESS}  icon={CheckCircle2} />
           <StatCard label={t('cashier.orders.revenue')}    value={`${Math.round(stats.revenue / 1000)}K`} sub={t('common.currency')} color={C} icon={TrendingUp} />
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
+        <div
+          className="flex items-center gap-2.5 mb-5 overflow-x-auto pb-1 scrollbar-hide"
+          style={{ overscrollBehaviorX: 'contain' }}
+          onWheel={(e) => {
+            if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              e.currentTarget.scrollLeft += e.deltaY;
+            }
+          }}
+        >
           {TAB_KEYS.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition flex-shrink-0"
-              style={{ backgroundColor: activeTab === tab ? C : '#F3F4F6', color: activeTab === tab ? '#fff' : '#6B7280' }}>
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold whitespace-nowrap transition flex-shrink-0 shadow-sm"
+              style={{ backgroundColor: activeTab === tab ? C : '#FFFFFF', color: activeTab === tab ? '#fff' : '#374151', border: activeTab === tab ? 'none' : '1px solid #E5E7EB' }}>
               {t(`cashier.orders.${tab}`)}
               {tab === 'requested' && requestedCount > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold text-white text-center leading-none flex items-center justify-center"
+                <span className="min-w-[20px] h-[20px] px-1.5 rounded-full text-xs font-bold text-white text-center leading-none flex items-center justify-center"
                   style={{ backgroundColor: activeTab === tab ? 'rgba(255,255,255,0.3)' : '#EF4444' }}>
                   {requestedCount}
                 </span>
@@ -1234,8 +1242,8 @@ export default function CashierOrders() {
               const typeLabel = isDeli ? t('orderTypes.delivery') : isToGo ? t('orderTypes.toGo') : t('orderTypes.dineIn');
               const typeColor = isDeli ? '#8B5CF6' : isToGo ? '#10B981' : '#6B7280';
               const dname   = (isToGo || isDeli)
-                ? (order.customerName || 'Walk-in')
-                : (order.tableName || 'Walk-in');
+                ? (order.customerName || t('cashier.orders.walkIn'))
+                : (order.tableName || t('cashier.orders.walkIn'));
 
               const cardItems   = order.items || [];
               const cardReady   = cardItems.filter(i => i.itemReady).length;
@@ -1277,10 +1285,10 @@ export default function CashierOrders() {
                       </span>
                       <span className="flex items-center gap-1">
                         <User className="w-3.5 h-3.5" />
-                        {(isToGo || isDeli) ? (order.customerPhone || 'No phone') : (order.waitressName || 'Counter')}
+                        {(isToGo || isDeli) ? (order.customerPhone || t('cashier.orders.noPhone')) : (order.waitressName || t('cashier.orders.counter'))}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />{elapsed(order.createdAt)}
+                        <Clock className="w-3.5 h-3.5" />{elapsed(order.createdAt, t)}
                       </span>
                     </div>
 

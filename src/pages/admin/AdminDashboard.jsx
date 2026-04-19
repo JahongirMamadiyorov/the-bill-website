@@ -248,13 +248,12 @@ export default function AdminDashboard() {
 
   // Format elapsed time
   const formatElapsedTime = (startTime) => {
-    if (!startTime) return 'N/A';
+    if (!startTime) return t('common.noData');
     const elapsed = Math.floor((new Date() - new Date(startTime)) / 60000);
-    if (elapsed < 1) return 'Just now';
-    if (elapsed === 1) return '1 min ago';
-    if (elapsed < 60) return `${elapsed} min ago`;
+    if (elapsed < 1) return t('time.justNow');
+    if (elapsed < 60) return t('time.minAgo', { count: elapsed });
     const hours = Math.floor(elapsed / 60);
-    return `${hours}h ${elapsed % 60}m ago`;
+    return t('time.hoursAgo', { h: hours, m: elapsed % 60 });
   };
 
   // Get role badge color
@@ -476,7 +475,7 @@ export default function AdminDashboard() {
                             >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">{notif.title || 'Notification'}</p>
+                                  <p className="text-sm font-medium text-gray-900">{notif.title || t('common.notification', 'Notification')}</p>
                                   <p className="text-xs text-gray-600 mt-1">{notif.message || ''}</p>
                                   <p className="text-xs text-gray-400 mt-1">
                                     {formatElapsedTime(notif.createdAt)}
@@ -619,8 +618,8 @@ export default function AdminDashboard() {
             </div>
             <p className="text-xs text-gray-500 mt-2">
               {tables.length > 0
-                ? `${Math.round((tableStats.occupied / tables.length) * 100)}% occupied`
-                : 'N/A'}
+                ? t('admin.dashboard.percentOccupied', { percent: Math.round((tableStats.occupied / tables.length) * 100) })
+                : t('common.noData')}
             </p>
           </div>
 
@@ -697,7 +696,7 @@ export default function AdminDashboard() {
                 <ShoppingCart size={20} className="text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">{t('admin.dashboard.activeOrdersBreakdown')}</h2>
               </div>
-              <span className="text-sm text-gray-500">{activeOrders.length} total</span>
+              <span className="text-sm text-gray-500">{activeOrders.length} {t('common.total').toLowerCase()}</span>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -732,7 +731,7 @@ export default function AdminDashboard() {
                 <h2 className="text-lg font-semibold text-gray-900">{t('admin.dashboard.financialFlowToday')}</h2>
               </div>
               <span className={`text-sm font-semibold ${todayInflow - totalOutflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {todayInflow - totalOutflow >= 0 ? '+' : ''}{money(todayInflow - totalOutflow)} net
+                {todayInflow - totalOutflow >= 0 ? '+' : ''}{money(todayInflow - totalOutflow)} {t('common.net').toLowerCase()}
               </span>
             </div>
             <div className="p-6 space-y-4">
@@ -743,7 +742,7 @@ export default function AdminDashboard() {
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{money(todayInflow)}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {todayInflow === 0 ? t('admin.dashboard.noPaymentsYet') : `${(dashboardData?.financialFlow?.inflow || []).length} payment method(s)`}
+                  {todayInflow === 0 ? t('admin.dashboard.noPaymentsYet') : `${(dashboardData?.financialFlow?.inflow || []).length} ${t('admin.dashboard.paymentMethods')}`}
                 </p>
               </div>
               <div className="border-l-4 border-red-500 pl-4 py-2">
@@ -759,7 +758,7 @@ export default function AdminDashboard() {
                     {expensesOnly > 0 && <div className="flex justify-between"><span>{t('admin.dashboard.expenses')}</span><span className="text-red-600 font-medium">{money(expensesOnly)}</span></div>}
                     {salariesToday > 0 && <div className="flex justify-between"><span>{t('admin.dashboard.salaries')}</span><span className="text-red-600 font-medium">{money(salariesToday)}</span></div>}
                     {deliveryPaymentsToday > 0 && <div className="flex justify-between"><span>{t('admin.dashboard.supplierPayments')}</span><span className="text-red-600 font-medium">{money(deliveryPaymentsToday)}</span></div>}
-                    {warehouseGoodsConsumed > 0 && <div className="flex justify-between"><span>Inventory</span><span className="text-red-600 font-medium">{money(warehouseGoodsConsumed)}</span></div>}
+                    {warehouseGoodsConsumed > 0 && <div className="flex justify-between"><span>{t('admin.dashboard.inventory')}</span><span className="text-red-600 font-medium">{money(warehouseGoodsConsumed)}</span></div>}
                   </div>
                 )}
               </div>
@@ -785,7 +784,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">{t('admin.dashboard.employeePayrollOwed')}</p>
-                  <p className="text-xs text-gray-400">Earned {money(monthGrossPay)} · Paid {money(totalPaymentsMade)}</p>
+                  <p className="text-xs text-gray-400">{t('admin.dashboard.earned')} {money(monthGrossPay)} · {t('admin.dashboard.paidAmount')} {money(totalPaymentsMade)}</p>
                 </div>
                 <p className="text-xl font-bold text-red-500">{money(debtsPayables.employeePayrollOwed)}</p>
               </div>
@@ -799,10 +798,10 @@ export default function AdminDashboard() {
               <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">{t('admin.dashboard.customerOutstandingLoans')}</p>
-                  <p className="text-xs text-gray-400">{loansData?.activeCount || 0} active loans</p>
+                  <p className="text-xs text-gray-400">{loansData?.activeCount || 0} {t('admin.dashboard.activeLoans')}</p>
                 </div>
                 <p className={`text-xl font-bold ${debtsPayables.customerLoansOutstanding > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
-                  {debtsPayables.customerLoansOutstanding > 0 ? money(debtsPayables.customerLoansOutstanding) : 'None'}
+                  {debtsPayables.customerLoansOutstanding > 0 ? money(debtsPayables.customerLoansOutstanding) : t('admin.dashboard.noneLabel')}
                 </p>
               </div>
             </div>
@@ -823,7 +822,7 @@ export default function AdminDashboard() {
                   onClick={() => setExpandedLowStock(!expandedLowStock)}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
-                  {expandedLowStock ? 'Collapse' : 'Expand'}
+                  {expandedLowStock ? t('admin.dashboard.collapse') : t('admin.dashboard.expand')}
                 </button>
               </div>
               <div className="p-6 flex-1">
@@ -836,17 +835,17 @@ export default function AdminDashboard() {
                             <Package size={16} className="text-red-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{item.name || 'Unknown Item'}</p>
+                            <p className="text-sm font-medium text-gray-900">{item.name || t('common.unknownItem', 'Unknown Item')}</p>
                             <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs text-red-600 font-semibold">{item.quantityInStock ?? item.quantity ?? 0} left</span>
-                              <span className="text-xs text-red-500">Min: {item.minStockLevel ?? item.minThreshold ?? 'N/A'}</span>
+                              <span className="text-xs text-red-600 font-semibold">{item.quantityInStock ?? item.quantity ?? 0} {t('admin.dashboard.left')}</span>
+                              <span className="text-xs text-red-500">{t('admin.dashboard.min')}: {item.minStockLevel ?? item.minThreshold ?? t('common.noData')}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     ))}
                     {!expandedLowStock && lowStockItems.length > 5 && (
-                      <p className="text-xs text-gray-500 text-center">+{lowStockItems.length - 5} more items</p>
+                      <p className="text-xs text-gray-500 text-center">{t('admin.dashboard.moreItems', { count: lowStockItems.length - 5 })}</p>
                     )}
                   </div>
                 ) : (
@@ -866,7 +865,7 @@ export default function AdminDashboard() {
                 <Archive size={20} className="text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">{t('admin.dashboard.warehouseToday')}</h2>
               </div>
-              <span className="text-sm text-gray-500">{allWarehouseItems.length || 0} items in stock</span>
+              <span className="text-sm text-gray-500">{allWarehouseItems.length || 0} {t('admin.dashboard.itemsInStock')}</span>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -909,15 +908,15 @@ export default function AdminDashboard() {
                               <User size={20} className="text-gray-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{staff.name || 'Unknown Staff'}</p>
-                              <p className="text-xs text-gray-600">{staff.role || 'N/A'}</p>
+                              <p className="font-medium text-gray-900">{staff.name || t('common.noData')}</p>
+                              <p className="text-xs text-gray-600">{staff.role || t('common.na', 'N/A')}</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(staff.role)} mb-1`}>
-                              {staff.role || 'Staff'}
+                              {staff.role || t('roles.staff', 'Staff')}
                             </span>
-                            <p className="text-sm font-semibold text-gray-900">{staff.hoursWorkedToday || 0}h worked</p>
+                            <p className="text-sm font-semibold text-gray-900">{staff.hoursWorkedToday || 0}h {t('admin.dashboard.hWorked')}</p>
                           </div>
                         </div>
                       </div>
@@ -949,8 +948,8 @@ export default function AdminDashboard() {
                     return (
                       <div key={item.id || index}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">{item.name || 'Unknown'}</span>
-                          <span className="text-sm font-semibold text-blue-600">{quantity} sold</span>
+                          <span className="text-sm font-medium text-gray-900">{item.name || t('common.unknown', 'Unknown')}</span>
+                          <span className="text-sm font-semibold text-blue-600">{quantity} {t('admin.dashboard.sold')}</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${percentage}%` }}></div>

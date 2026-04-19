@@ -5,7 +5,7 @@ import { useTranslation } from '../context/LanguageContext';
 import {
   Home, BarChart3, Users, Package, Wallet, User, LayoutDashboard, Grid3X3,
   UtensilsCrossed, ClipboardList, ShoppingCart, History, Banknote, Bell,
-  TrendingUp, ChefHat, LogOut, Menu, X, ChevronLeft, ChevronRight, Building2, Shield
+  TrendingUp, ChefHat, LogOut, Menu, X, ChevronLeft, ChevronRight, Building2, Shield, Languages
 } from 'lucide-react';
 
 const ROLE_STYLE = {
@@ -63,7 +63,7 @@ const NAV_ITEMS = {
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, lang, switchLang } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const role = user?.role || 'admin';
@@ -116,8 +116,46 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* Bottom: collapse toggle + logout */}
+        {/* Bottom: language switcher + collapse + logout */}
         <div className="p-3 space-y-1">
+          {/* Language switcher */}
+          {sidebarOpen ? (
+            <div className="flex items-center gap-2 px-3 py-2">
+              <Languages size={18} className="shrink-0 text-gray-500" />
+              <div className="flex-1 grid grid-cols-2 gap-1 p-0.5 bg-gray-100 rounded-lg">
+                <button
+                  onClick={() => switchLang('uz')}
+                  className={`px-2 py-1 rounded-md text-xs font-semibold transition-all ${
+                    lang === 'uz'
+                      ? `bg-white ${rc.text} shadow-sm`
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  UZ
+                </button>
+                <button
+                  onClick={() => switchLang('en')}
+                  className={`px-2 py-1 rounded-md text-xs font-semibold transition-all ${
+                    lang === 'en'
+                      ? `bg-white ${rc.text} shadow-sm`
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => switchLang(lang === 'uz' ? 'en' : 'uz')}
+              title={t('language.selectLanguage')}
+              className="flex items-center justify-center w-full px-3 py-2.5 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+            >
+              <Languages size={18} className="shrink-0" />
+              <span className="ml-1">{lang.toUpperCase()}</span>
+            </button>
+          )}
+
           {/* Collapse / expand */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}

@@ -110,7 +110,7 @@ const WaitressProfile = () => {
                 {initials}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{user?.name || 'Waitress'}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{user?.name || t('roles.waitress', 'Waitress')}</h2>
                 <p className="text-sm text-gray-600">{t('roles.waitress')}</p>
               </div>
             </div>
@@ -118,11 +118,11 @@ const WaitressProfile = () => {
             <div className="space-y-4 border-t pt-6">
               <div>
                 <p className="text-gray-600 text-sm mb-1">{t('common.email')}</p>
-                <p className="text-lg font-semibold text-gray-900">{user?.email || 'N/A'}</p>
+                <p className="text-lg font-semibold text-gray-900">{user?.email || t('common.na', 'N/A')}</p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm mb-1">{t('common.phone')}</p>
-                <p className="text-lg font-semibold text-gray-900">{user?.phone || 'N/A'}</p>
+                <p className="text-lg font-semibold text-gray-900">{user?.phone || t('common.na', 'N/A')}</p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm mb-1">{t('common.role')}</p>

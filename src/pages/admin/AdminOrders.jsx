@@ -19,17 +19,17 @@ const statusColors = {
   cancelled: { bg: 'bg-red-100', text: 'text-red-700', badge: 'bg-red-500' },
 };
 
-// Note: statusLabels are now resolved via t() inside the component
-const statusLabels = {
-  pending: 'Pending',
-  sent_to_kitchen: 'Sent to Kitchen',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  served: 'Served',
-  bill_requested: 'Bill Requested',
-  paid: 'Paid',
-  cancelled: 'Cancelled',
-};
+// statusLabels resolved via t() inside the component
+const getStatusLabels = (t) => ({
+  pending: t('admin.orders.statusLabels.pending'),
+  sent_to_kitchen: t('statuses.sentToKitchen'),
+  preparing: t('admin.orders.statusLabels.preparing'),
+  ready: t('admin.orders.statusLabels.ready'),
+  served: t('admin.orders.statusLabels.served'),
+  bill_requested: t('admin.orders.statusLabels.bill_requested'),
+  paid: t('admin.orders.statusLabels.paid'),
+  cancelled: t('statuses.cancelled'),
+});
 
 const statusFlow = {
   pending: 'sent_to_kitchen',
@@ -40,31 +40,16 @@ const statusFlow = {
   bill_requested: null,
 };
 
-const nextStatusLabel = {
-  pending: 'Send to Kitchen',
-  sent_to_kitchen: 'Start Preparing',
-  preparing: 'Mark Ready',
-  ready: 'Mark Served',
-  served: 'Request Bill',
+const getNextStatusLabel = (t) => ({
+  pending: t('admin.orders.sendToKitchen'),
+  sent_to_kitchen: t('admin.orders.nextStatusLabels.confirmed'),
+  preparing: t('admin.orders.nextStatusLabels.preparing'),
+  ready: t('admin.orders.nextStatusLabels.ready'),
+  served: t('admin.orders.nextStatusLabels.served'),
   bill_requested: null,
-};
+});
 
-const deleteReasons = [
-  'Duplicate Entry',
-  'Wrong Table',
-  'Test Order',
-  'Customer Left',
-  'Other',
-];
-
-const cancelReasons = [
-  'Customer Left',
-  'Customer Changed Mind',
-  'Kitchen Issue',
-  'Wrong Order',
-  'Long Wait Time',
-  'Other',
-];
+// deleteReasons and cancelReasons loaded from i18n
 
 export default function AdminOrders() {
   const navigate = useNavigate();
@@ -310,10 +295,10 @@ export default function AdminOrders() {
     const created = new Date(createdAt);
     const diffMs = now - created;
     const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Now';
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1) return t('admin.orders.nowLabel');
+    if (diffMins < 60) return t('admin.orders.minAgo', { m: diffMins });
     const diffHours = Math.floor(diffMins / 60);
-    return `${diffHours}h ago`;
+    return t('admin.orders.hoursAgo', { h: diffHours });
   };
 
   const displayItems = (items, maxItems = 3) => {
@@ -338,12 +323,12 @@ export default function AdminOrders() {
 
   const getWaitressName = (waitressId) => {
     const waitress = allWaitresses.find(w => w.id === waitressId);
-    return waitress ? waitress.name : waitressId || 'N/A';
+    return waitress ? waitress.name : waitressId || t('admin.orders.na');
   };
 
   const getTableNumber = (tableId) => {
     const table = allTables.find(t => t.id === tableId);
-    return table ? table.tableNumber : tableId || 'N/A';
+    return table ? table.tableNumber : tableId || t('admin.orders.na');
   };
 
   const openEditModal = (order) => {
@@ -633,7 +618,7 @@ export default function AdminOrders() {
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-gray-900">#{order.dailyNumber || '—'}</span>
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]?.bg || 'bg-gray-100'} ${statusColors[order.status]?.text || 'text-gray-700'}`}>
-                        {statusLabels[order.status] || order.status}
+                        {getStatusLabels(t)[order.status] || order.status}
                       </span>
                     </div>
                     <span className="text-xs text-gray-400">{getElapsedTime(order.createdAt)}</span>
@@ -641,7 +626,7 @@ export default function AdminOrders() {
 
                   {/* Row 2: Table + Waitress */}
                   <div className="px-4 pb-3 flex items-center gap-1.5 text-sm text-gray-600">
-                    <span className="font-semibold text-gray-800">Table {getTableNumber(order.tableId)}</span>
+                    <span className="font-semibold text-gray-800">{t('admin.orders.tablePrefix')} {getTableNumber(order.tableId)}</span>
                     <span className="text-gray-300">·</span>
                     <span>{getWaitressName(order.waitressId)}</span>
                   </div>
@@ -656,11 +641,11 @@ export default function AdminOrders() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={(e) => { e.stopPropagation(); openEditModal(order); }}
-                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Edit">
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition" title={t('common.edit', 'Edit')}>
                         <Edit3 size={16} />
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); setCancelTarget(order); }}
-                        className="p-2 rounded-lg text-red-400 hover:bg-red-50 transition" title="Cancel Order">
+                        className="p-2 rounded-lg text-red-400 hover:bg-red-50 transition" title={t('orders.cancelOrder', 'Cancel Order')}>
                         <Ban size={16} />
                       </button>
                     </div>
@@ -675,7 +660,7 @@ export default function AdminOrders() {
                           className="flex-1 px-3 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm"
                         >
                           <Check size={14} />
-                          {nextStatusLabel[order.status]}
+                          {getNextStatusLabel(t)[order.status]}
                         </button>
                       )}
                       {(order.status === 'served' || order.status === 'bill_requested') && (
@@ -708,11 +693,11 @@ export default function AdminOrders() {
             <div className="flex flex-wrap gap-3 items-end">
               <div>
                 <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{t("common.from")}</label>
-                <DatePicker value={dateFrom} onChange={(v) => { setPeriodPreset('custom'); setDateFrom(v); }} placeholder="Start date" size="sm" className="w-[150px]" />
+                <DatePicker value={dateFrom} onChange={(v) => { setPeriodPreset('custom'); setDateFrom(v); }} placeholder={t('placeholders.startDate', 'Start date')} size="sm" className="w-[150px]" />
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{t("common.to")}</label>
-                <DatePicker value={dateTo} onChange={(v) => { setPeriodPreset('custom'); setDateTo(v); }} placeholder="End date" size="sm" className="w-[150px]" />
+                <DatePicker value={dateTo} onChange={(v) => { setPeriodPreset('custom'); setDateTo(v); }} placeholder={t('placeholders.endDate', 'End date')} size="sm" className="w-[150px]" />
               </div>
               <div className="flex gap-1.5 items-center pb-[1px]">
                 {[
@@ -740,7 +725,7 @@ export default function AdminOrders() {
                     { value: 'cash', label: t('paymentMethods.cash') },
                     { value: 'card', label: t('paymentMethods.card') },
                     { value: 'online', label: t('paymentMethods.online') },
-                    { value: 'split', label: 'Split' },
+                    { value: 'split', label: t('admin.orders.splitLabel') },
                     { value: 'qr_code', label: t('paymentMethods.qrCode') },
                     { value: 'loan', label: t('paymentMethods.loan') },
                   ]}
@@ -797,7 +782,7 @@ export default function AdminOrders() {
                             <span className="text-sm font-bold text-gray-900">#{order.dailyNumber || '—'}</span>
                           </td>
                           <td className="px-5 py-3.5 text-sm text-gray-600">
-                            {order.tableId ? `Table ${getTableNumber(order.tableId)}` : <span className="text-gray-400">—</span>}
+                            {order.tableId ? `${t('admin.orders.tablePrefix')} ${getTableNumber(order.tableId)}` : <span className="text-gray-400">--</span>}
                           </td>
                           <td className="px-5 py-3.5">
                             <span className="text-sm text-gray-600">{itemCount} items</span>
@@ -859,19 +844,19 @@ export default function AdminOrders() {
                 <thead className="bg-gradient-to-r from-red-50 to-red-100 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('common.order')}</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Table</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Items</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Total</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Cancellation Reason</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('admin.orders.tablePrefix')}</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('admin.orders.items')}</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('admin.orders.total')}</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('admin.orders.cancellationReason')}</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">{t('admin.orders.date')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {cancelledOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-red-50 transition">
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900">#{order.dailyNumber || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">Table {getTableNumber(order.tableId)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{Array.isArray(order.items) ? order.items.length : 0} items</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{t('admin.orders.tablePrefix')} {getTableNumber(order.tableId)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{t('admin.orders.itemsCount', { count: Array.isArray(order.items) ? order.items.length : 0 })}</td>
                       <td className="px-6 py-4 text-sm font-bold text-gray-900">{money(order.totalAmount || 0)}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{order.cancellationReason || t('common.noData')}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{fmtDate(order.updatedAt)}</td>
@@ -916,7 +901,7 @@ export default function AdminOrders() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-xs font-semibold text-gray-600 mb-1">{t('common.status')}</div>
                   <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${statusColors[selectedOrder.status]?.bg || 'bg-gray-100'} ${statusColors[selectedOrder.status]?.text || 'text-gray-700'}`}>
-                    {statusLabels[selectedOrder.status] || selectedOrder.status}
+                    {getStatusLabels(t)[selectedOrder.status] || selectedOrder.status}
                   </span>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
@@ -1186,7 +1171,7 @@ export default function AdminOrders() {
                     onChange={(value) => setEditFormData({ ...editFormData, tableId: value || null })}
                     options={[
                       { value: '', label: t('common.select') },
-                      ...allTables.map(table => ({ value: table.id, label: `Table ${table.tableNumber}` }))
+                      ...allTables.map(table => ({ value: table.id, label: `${t('admin.orders.tablePrefix')} ${table.tableNumber}` }))
                     ]}
                     size="sm"
                   />
@@ -1290,7 +1275,7 @@ export default function AdminOrders() {
                 <textarea
                   value={editFormData.notes}
                   onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                  placeholder="Add order notes..."
+                  placeholder={t('placeholders.orderNotes', 'Add order notes...')}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   rows="2"
                 />
@@ -1341,7 +1326,7 @@ export default function AdminOrders() {
                     <h2 className="text-lg font-bold text-gray-900">{t('cashier.orders.processPayment')}</h2>
                     <p className="text-sm text-gray-500">
                       Order #{paymentOrder.dailyNumber || '—'}
-                      {paymentOrder.tableName ? ` · ${paymentOrder.tableName}` : paymentOrder.tableId ? ` · Table ${getTableNumber(paymentOrder.tableId)}` : ''}
+                      {paymentOrder.tableName ? ` · ${paymentOrder.tableName}` : paymentOrder.tableId ? ` · ${t('admin.orders.tablePrefix')} ${getTableNumber(paymentOrder.tableId)}` : ''}
                       {paymentOrder.waitressId ? ` · ${getWaitressName(paymentOrder.waitressId)}` : ''}
                     </p>
                   </div>
@@ -1525,7 +1510,7 @@ export default function AdminOrders() {
                                   type="text"
                                   value={part.loanName}
                                   onChange={e => { const u=[...splitParts]; u[idx]={...u[idx],loanName:e.target.value}; setSplitParts(u); }}
-                                  placeholder="Customer name"
+                                  placeholder={t('placeholders.customerName', 'Customer name')}
                                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                                 <PhoneInput
@@ -1569,7 +1554,7 @@ export default function AdminOrders() {
                       <div className="grid grid-cols-3 gap-3">
                         <div>
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('cashier.orders.customerName')}</p>
-                          <input type="text" value={pf.loanName} onChange={e => setPaymentFormData({ ...pf, loanName: e.target.value })} placeholder="Name..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          <input type="text" value={pf.loanName} onChange={e => setPaymentFormData({ ...pf, loanName: e.target.value })} placeholder={t('placeholders.nameDots', 'Name...')} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('common.phone')}</p>
@@ -1589,7 +1574,7 @@ export default function AdminOrders() {
                     <textarea
                       value={pf.notes}
                       onChange={e => setPaymentFormData({ ...pf, notes: e.target.value })}
-                      placeholder="Add payment notes..."
+                      placeholder={t('placeholders.paymentNotes', 'Add payment notes...')}
                       rows={2}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     />
@@ -1720,7 +1705,7 @@ export default function AdminOrders() {
                   onChange={(value) => setDeleteReason(value)}
                   options={[
                     { value: '', label: t('admin.orders.selectReason') },
-                    ...deleteReasons.map((reason) => ({
+                    ...t('admin.orders.deleteReasons').map((reason) => ({
                       value: reason,
                       label: reason
                     }))
@@ -1779,7 +1764,7 @@ export default function AdminOrders() {
               <p className="text-sm text-gray-600">Please select a reason for cancelling this order:</p>
 
               <div className="space-y-2">
-                {cancelReasons.map((r) => (
+                {t('admin.orders.cancelReasons').map((r) => (
                   <button
                     key={r}
                     onClick={() => setCancelReason(r)}
@@ -1803,7 +1788,7 @@ export default function AdminOrders() {
                 <textarea
                   value={cancelOtherText}
                   onChange={(e) => setCancelOtherText(e.target.value)}
-                  placeholder="Describe the reason…"
+                  placeholder={t('placeholders.describeReason', 'Describe the reason…')}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
                 />
               )}

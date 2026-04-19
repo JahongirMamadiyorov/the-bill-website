@@ -20,7 +20,7 @@ export default function SuperAdminProfile() {
               {initials}
             </div>
             <div>
-              <h1 className="text-xl font-extrabold">{user?.name || 'Super Admin'}</h1>
+              <h1 className="text-xl font-extrabold">{user?.name || t('roles.superAdmin', 'Super Admin')}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <Shield size={14} className="text-white/70" />
                 <span className="text-sm text-white/80 font-medium">{t('roles.super_admin')}</span>

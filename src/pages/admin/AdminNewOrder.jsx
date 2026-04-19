@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from '../../context/LanguageContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -9,10 +9,10 @@ import {
 import { menuAPI, tablesAPI, ordersAPI } from '../../api/client';
 import PhoneInput from '../../components/PhoneInput';
 
-const ORDER_TYPES = [
-  { key: 'dine_in',  label: 'Dine-In',  Icon: UtensilsCrossed },
-  { key: 'to_go',    label: 'To Go',    Icon: ShoppingBag },
-  { key: 'delivery', label: 'Delivery', Icon: Truck },
+const getOrderTypes = (t) => [
+  { key: 'dine_in',  label: t('admin.newOrder.dineIn'),   Icon: UtensilsCrossed },
+  { key: 'to_go',    label: t('admin.newOrder.toGo'),     Icon: ShoppingBag },
+  { key: 'delivery', label: t('admin.newOrder.delivery'), Icon: Truck },
 ];
 
 export default function AdminNewOrder({ isModal = false, initialTable = null, onClose = null }) {
@@ -20,6 +20,9 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
   const { t } = useTranslation();
   const location  = useLocation();
   const preTable  = initialTable || location.state?.table || null;
+
+  // Build ORDER_TYPES inside component so it has access to t()
+  const ORDER_TYPES = useMemo(() => getOrderTypes(t), [t]);
 
   // ── "Add items to existing order" mode ──
   const existingOrderId = location.state?.existingOrderId || null;
@@ -233,7 +236,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
           <p className="text-xs text-gray-400 font-medium">{t("admin.newOrder.table")}</p>
           <p className={`text-sm font-semibold leading-tight ${selectedTable ? 'text-gray-900' : 'text-amber-500'}`}>
             {selectedTable
-              ? `${selectedTable.name || 'Table ' + selectedTable.tableNumber}${selectedTable.section ? ' · ' + selectedTable.section : ''}`
+              ? `${selectedTable.name || t('common.tablePrefix', 'Table ') + selectedTable.tableNumber}${selectedTable.section ? ' · ' + selectedTable.section : ''}`
               : t('admin.newOrder.tapToSelect')}
           </p>
         </div>
@@ -348,7 +351,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
       {cartEntries.length > 0 && (
         <div className="pt-3 border-t border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-600">Total</span>
+            <span className="text-sm font-semibold text-gray-600">{t('common.total')}</span>
             <span className="text-base font-bold text-gray-900">{formatPrice(cartTotal)}</span>
           </div>
         </div>
@@ -360,7 +363,15 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
     <div className={`flex flex-col ${fullHeight ? 'h-full' : ''}`}>
       {/* Category pills */}
       <div className="px-4 pb-3 pt-1 flex-shrink-0">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div
+          className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+          style={{ overscrollBehaviorX: 'contain' }}
+          onWheel={(e) => {
+            if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              e.currentTarget.scrollLeft += e.deltaY;
+            }
+          }}
+        >
           {categories.map(cat => (
             <button
               key={cat.id}
@@ -380,7 +391,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
       {/* Items */}
       <div className={`px-4 flex flex-col gap-2 ${fullHeight ? 'overflow-y-auto flex-1 pb-4' : 'pb-32'}`}>
         {filteredItems.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">No items in this category</div>
+          <div className="text-center py-10 text-gray-400 text-sm">{t('admin.newOrder.noItemsInCategory')}</div>
         )}
         {filteredItems.map(item => {
           const qty = cart[item.id]?.qty || 0;
@@ -533,7 +544,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                 </p>
               ) : selectedTable && (
                 <p className="text-sm text-gray-400 mt-0.5">
-                  {selectedTable.name || 'Table ' + selectedTable.tableNumber}
+                  {selectedTable.name || t('common.tablePrefix', 'Table ') + selectedTable.tableNumber}
                   {selectedTable.section ? ' · ' + selectedTable.section : ''}
                 </p>
               )}
@@ -575,7 +586,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                 {!existingOrderId && orderType === 'dine_in' && !selectedTable && (
                   <div className="flex items-center gap-2 text-amber-600 text-xs font-medium bg-amber-50 rounded-lg px-3 py-2">
                     <AlertCircle size={14} />
-                    Select a table to place order
+                    {t('admin.newOrder.selectTableWarning')}
                   </div>
                 )}
 
@@ -592,7 +603,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("admin.newOrder.cart")}</p>
                     {cartCount > 0 && (
-                      <span className="text-xs font-bold" style={{ color: PRIMARY }}>{cartCount} items</span>
+                      <span className="text-xs font-bold" style={{ color: PRIMARY }}>{t('admin.newOrder.itemCount', { count: cartCount })}</span>
                     )}
                   </div>
                   <CartPanel />
@@ -656,7 +667,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               </p>
             ) : selectedTable && (
               <p className="text-sm text-gray-500">
-                {selectedTable.name || 'Table ' + selectedTable.tableNumber}
+                {selectedTable.name || t('common.tablePrefix', 'Table ') + selectedTable.tableNumber}
                 {selectedTable.section ? ' · ' + selectedTable.section : ''}
               </p>
             )}
@@ -665,7 +676,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
         <div className="flex items-center gap-3">
           {cartCount > 0 && (
             <span className="text-sm font-semibold text-gray-500">
-              {cartCount} {cartCount === 1 ? 'item' : 'items'} · {formatPrice(cartTotal)}
+              {t('admin.newOrder.itemCount', { count: cartCount })} · {formatPrice(cartTotal)}
             </span>
           )}
         </div>
@@ -679,7 +690,15 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
           {/* Category tabs */}
           <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t("admin.newOrder.menuLabel")}</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div
+              className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+              style={{ overscrollBehaviorX: 'contain' }}
+              onWheel={(e) => {
+                if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                  e.currentTarget.scrollLeft += e.deltaY;
+                }
+              }}
+            >
               {categories.map(cat => (
                 <button
                   key={cat.id}
@@ -699,7 +718,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
           {/* Items grid */}
           <div className="flex-1 overflow-y-auto p-6">
             {filteredItems.length === 0 && (
-              <div className="text-center py-16 text-gray-400 text-sm">No items in this category</div>
+              <div className="text-center py-16 text-gray-400 text-sm">{t('admin.newOrder.noItemsInCategory')}</div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {filteredItems.map(item => {
@@ -810,8 +829,8 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                       <p className="text-xs text-gray-400 font-medium">{t("admin.newOrder.table")}</p>
                       <p className={`text-sm font-semibold leading-tight ${selectedTable ? 'text-gray-900' : 'text-amber-500'}`}>
                         {selectedTable
-                          ? `${selectedTable.name || 'Table ' + selectedTable.tableNumber}${selectedTable.section ? ' · ' + selectedTable.section : ''}`
-                          : 'Click to select'}
+                          ? `${selectedTable.name || t('common.tablePrefix', 'Table ') + selectedTable.tableNumber}${selectedTable.section ? ' · ' + selectedTable.section : ''}`
+                          : t('admin.newOrder.clickToSelect')}
                       </p>
                     </div>
                     <ChevronRight size={16} className="text-gray-400" />
@@ -882,7 +901,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
             {!existingOrderId && orderType === 'dine_in' && !selectedTable && (
               <div className="flex items-center gap-2 text-amber-600 text-sm font-medium bg-amber-50 rounded-lg px-3 py-2.5">
                 <AlertCircle size={15} />
-                Select a table to place the order
+                {t('admin.newOrder.selectTableWarningLong')}
               </div>
             )}
 
@@ -899,14 +918,14 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("admin.newOrder.cart")}</p>
                 {cartCount > 0 && (
-                  <span className="text-xs font-bold" style={{ color: PRIMARY }}>{cartCount} items</span>
+                  <span className="text-xs font-bold" style={{ color: PRIMARY }}>{t('admin.newOrder.itemCount', { count: cartCount })}</span>
                 )}
               </div>
 
               {cartEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-300 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                   <ShoppingCart size={32} className="mb-2" />
-                  <p className="text-sm">Add items from the menu</p>
+                  <p className="text-sm">{t('admin.newOrder.addItemsFromMenu')}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
@@ -914,7 +933,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                     <div key={item.id} className="flex items-center gap-3 py-2.5 px-3 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-gray-900 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-400">{formatPrice(item.price)} each</p>
+                        <p className="text-xs text-gray-400">{formatPrice(item.price)} {t('common.each')}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
@@ -944,7 +963,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                   ))}
                   {/* Subtotal in cart area */}
                   <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-200">
-                    <span className="text-sm font-semibold text-gray-600">Total</span>
+                    <span className="text-sm font-semibold text-gray-600">{t('common.total')}</span>
                     <span className="text-lg font-bold text-gray-900">{formatPrice(cartTotal)}</span>
                   </div>
                 </div>
@@ -963,11 +982,11 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
             >
               {placing ? (
-                <span>{existingOrderId ? 'Adding Items...' : 'Placing Order...'}</span>
+                <span>{existingOrderId ? t('admin.newOrder.addingItems') : t('admin.newOrder.placingOrder')}</span>
               ) : (
                 <>
                   <Check size={18} />
-                  <span>{existingOrderId ? 'Add to Order' : 'Place Order'}</span>
+                  <span>{existingOrderId ? t('admin.newOrder.addToOrder') : t('admin.newOrder.placeOrder')}</span>
                   {cartCount > 0 && <span className="opacity-75 ml-1">· {formatPrice(cartTotal)}</span>}
                 </>
               )}
