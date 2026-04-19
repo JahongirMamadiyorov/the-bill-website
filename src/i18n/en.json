@@ -851,7 +851,10 @@
       "off": "OFF",
       "noItemsInCategory": "No items in this category",
       "itemCount": "{count} {count, plural, one {item} other {items}}",
-      "priceEach": "{price} each"
+      "priceEach": "{price} each",
+      "enterAmount": "Enter amount",
+      "amount": "Amount",
+      "price": "Price"
     }
   },
 

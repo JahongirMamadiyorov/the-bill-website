@@ -139,8 +139,13 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
   const addToCart = (item) => {
     // Weighed items open the amount picker instead of incrementing by 1
     if (isWeighedItem(item)) {
-      const current = cart[item.id]?.qty || '';
-      setAmountPicker({ item, draft: current ? String(current) : '' });
+      const current   = cart[item.id]?.qty || '';
+      const unitPrice = Number(item.price || 0);
+      const seedQty   = current ? String(current) : '';
+      const seedPrice = current && unitPrice > 0
+        ? String(Math.round(Number(current) * unitPrice))
+        : '';
+      setAmountPicker({ item, draft: seedQty, priceDraft: seedPrice });
       return;
     }
     setCart(prev => ({
@@ -159,6 +164,29 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
     const item = amountPicker.item;
     setCart(prev => ({ ...prev, [item.id]: { item, qty: rounded } }));
     setAmountPicker(null);
+  };
+
+  // Bidirectional update helpers — typing in qty updates price, typing in
+  // price updates qty (so the cashier can enter "I want 50,000 so'm of fish").
+  const onAmountQtyChange = (v) => {
+    const unit = Number(amountPicker?.item?.price || 0);
+    const qty  = parseFloat(String(v || '').replace(',', '.')) || 0;
+    const priceCalc = Math.round(qty * unit);
+    setAmountPicker(p => p ? {
+      ...p,
+      draft: v,
+      priceDraft: qty > 0 && unit > 0 ? String(priceCalc) : '',
+    } : p);
+  };
+  const onAmountPriceChange = (v) => {
+    const unit  = Number(amountPicker?.item?.price || 0);
+    const price = parseFloat(String(v || '').replace(',', '.')) || 0;
+    const qty   = unit > 0 ? Math.round((price / unit) * 1000) / 1000 : 0;
+    setAmountPicker(p => p ? {
+      ...p,
+      priceDraft: v,
+      draft: price > 0 && unit > 0 ? String(qty) : '',
+    } : p);
   };
 
   const removeFromCart = (item) => {
@@ -1128,6 +1156,10 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               </button>
             </div>
 
+            {/* Amount (kg / l) input */}
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              {t('admin.newOrder.amount', 'Amount')}
+            </label>
             <div className="relative">
               <input
                 type="number"
@@ -1136,7 +1168,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                 inputMode="decimal"
                 autoFocus
                 value={amountPicker.draft}
-                onChange={(e) => setAmountPicker(p => ({ ...p, draft: e.target.value }))}
+                onChange={(e) => onAmountQtyChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') confirmAmountPicker();
                   if (e.key === 'Escape') setAmountPicker(null);
@@ -1154,7 +1186,7 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               {['0.25', '0.5', '1', '1.5', '2'].map(p => (
                 <button
                   key={p}
-                  onClick={() => setAmountPicker(s => ({ ...s, draft: p }))}
+                  onClick={() => onAmountQtyChange(p)}
                   className="flex-1 px-2 py-2 rounded-lg text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
                 >
                   {p}
@@ -1162,19 +1194,29 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
               ))}
             </div>
 
-            {/* Live total */}
-            {(() => {
-              const a = parseFloat(String(amountPicker.draft || '').replace(',', '.')) || 0;
-              const total = a * Number(amountPicker.item.price || 0);
-              return (
-                <div className="mt-4 flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                  <span className="text-sm text-gray-600">{t('common.total', 'Total')}</span>
-                  <span className="text-lg font-extrabold text-gray-900">
-                    {Math.round(total).toLocaleString()} so'm
-                  </span>
-                </div>
-              );
-            })()}
+            {/* Price (so'm) input — bidirectional with amount */}
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mt-4 mb-1">
+              {t('admin.newOrder.price', 'Price')}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                step="1"
+                min="0"
+                inputMode="numeric"
+                value={amountPicker.priceDraft || ''}
+                onChange={(e) => onAmountPriceChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmAmountPicker();
+                  if (e.key === 'Escape') setAmountPicker(null);
+                }}
+                placeholder="0"
+                className="w-full px-4 py-3 pr-14 border border-gray-300 rounded-xl text-2xl font-bold text-gray-900 focus:outline-none focus:border-blue-500"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg">
+                so'm
+              </span>
+            </div>
 
             <div className="flex gap-2 mt-4">
               <button

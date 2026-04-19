@@ -851,7 +851,10 @@
       "noItemsInCategory": "Bu kategoriyada taom yo'q",
       "itemCount": "{count} ta taom",
       "priceEach": "{price} dona",
-      "addingItems": "Qo'shilmoqda..."
+      "addingItems": "Qo'shilmoqda...",
+      "enterAmount": "Miqdorni kiriting",
+      "amount": "Miqdor",
+      "price": "Narx"
     }
   },
 
