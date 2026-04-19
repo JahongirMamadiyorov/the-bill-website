@@ -185,31 +185,36 @@ export default function AdminTables() {
       const pendingDel = pendingSectionDeletesRef.current;
       const pendingAdd = pendingSectionAddsRef.current;
 
-      // Filter the server snapshot through pending writes so optimistic UI
-      // doesn't get snapped back during the brief window before the backend
-      // reflects an in-flight add or delete.
-      const seen = new Set();
-      const merged = [];
-      for (const name of data) {
-        const lc = String(name).toLowerCase();
-        if (pendingDel.has(lc)) continue; // user just removed this
-        if (seen.has(lc)) continue;
-        seen.add(lc);
-        merged.push(name);
-      }
-      // Re-add any pending additions the server hasn't acknowledged yet.
-      for (const [lc, _exp] of pendingAdd) {
-        if (!seen.has(lc)) {
-          // We stored the lowercase key — recover the original casing from
-          // the current state if available, otherwise capitalise.
-          const fromState = allSections.find(s => s.toLowerCase() === lc);
-          merged.push(fromState || lc);
+      // Use functional updater so we don't need to close over `allSections`.
+      // Closing over it would make this callback change identity every poll
+      // and re-trigger the polling useEffect below, flashing the "Loading…"
+      // state on every tick.
+      setAllSections(prev => {
+        const seen = new Set();
+        const merged = [];
+        for (const name of data) {
+          const lc = String(name).toLowerCase();
+          if (pendingDel.has(lc)) continue; // user just removed this
+          if (seen.has(lc)) continue;
           seen.add(lc);
+          merged.push(name);
         }
-      }
-      setAllSections(merged);
+        // Re-add any pending additions the server hasn't acknowledged yet.
+        for (const [lc, _exp] of pendingAdd) {
+          if (!seen.has(lc)) {
+            const fromState = prev.find(s => s.toLowerCase() === lc);
+            merged.push(fromState || lc);
+            seen.add(lc);
+          }
+        }
+        // Skip state update if identical to avoid a re-render blink.
+        if (merged.length === prev.length && merged.every((v, i) => v === prev[i])) {
+          return prev;
+        }
+        return merged;
+      });
     } catch (_) {}
-  }, [call, allSections]);
+  }, [call]);
 
   // Snapshot signature of last applied tables payload — used to skip
   // setTables when the polled data is unchanged (avoids re-render blink).
