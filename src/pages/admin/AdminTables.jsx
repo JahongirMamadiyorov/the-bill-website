@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminNewOrder from './AdminNewOrder';
 import PhoneInput, { formatPhoneDisplay } from '../../components/PhoneInput';
 import { useApi } from '../../hooks/useApi';
@@ -111,6 +112,7 @@ export default function AdminTables() {
 
   const { call }   = useApi();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // Build STATUS config inside component so it has access to t()
   const STATUS = useMemo(() => getStatusConfig(t), [t]);
@@ -1205,7 +1207,27 @@ export default function AdminTables() {
                 {isOccupied && (
                   <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => { fetchMenuForAddFood(); setOrderViewOpen(true); }}
+                      onClick={async () => {
+                        // Resolve the active order id for this table, then navigate to the
+                        // Orders page with that order pre-opened in the rich detail modal.
+                        let orderId = tableOrder?.id || table?.active_order_id || table?.activeOrderId;
+                        if (!orderId) {
+                          try {
+                            const data = await ordersAPI.getAll({
+                              tableId: table.id,
+                              status:  'pending,sent_to_kitchen,preparing,ready,bill_requested',
+                            });
+                            const orders = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+                            orderId = orders[0]?.id;
+                          } catch (_) { /* ignore */ }
+                        }
+                        setSelectedTable(null);
+                        if (orderId) {
+                          navigate(`/admin/orders?open=${encodeURIComponent(orderId)}`);
+                        } else {
+                          navigate('/admin/orders');
+                        }
+                      }}
                       className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
                     >
                       <ClipboardList size={18} />

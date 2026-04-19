@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from '../../context/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApi, money, fmtDate } from '../../hooks/useApi';
 import { ordersAPI, menuAPI, tablesAPI, usersAPI } from '../../api/client';
 import Dropdown from '../../components/Dropdown';
@@ -53,6 +53,7 @@ const getNextStatusLabel = (t) => ({
 
 export default function AdminOrders() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { call, loading, error } = useApi();
   const [activeOrders, setActiveOrders] = useState([]);
@@ -85,6 +86,23 @@ export default function AdminOrders() {
       .catch(() => {});
   }, [selectedOrder?.id, modalOpenKey]); // eslint-disable-line
 
+  // Auto-open an order if /admin/orders?open=<orderId> is in the URL
+  // (used by AdminTables → "View Full Order" navigation).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const openId = params.get('open');
+    if (!openId) return;
+    ordersAPI.getById(openId)
+      .then(full => {
+        if (full?.id) openOrderModal(full);
+      })
+      .catch(() => {})
+      .finally(() => {
+        // Strip the ?open= param so refreshing doesn't reopen it.
+        navigate(location.pathname, { replace: true });
+      });
+  }, [location.search]); // eslint-disable-line
+
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
@@ -100,6 +118,26 @@ export default function AdminOrders() {
   const [allWaitresses, setAllWaitresses] = useState([]);
   const [allMenuItems, setAllMenuItems] = useState([]);
   const [searchMenuQuery, setSearchMenuQuery] = useState('');
+  // Amount picker for kg/L items in edit modal: { idx: number|null, item, draft }
+  const [amountPicker, setAmountPicker] = useState(null);
+
+  // ── Unit helpers (shared with Edit Order modal) ─────────────────────────
+  const isWeighedUnit = (unit) => {
+    const u = String(unit || 'piece').toLowerCase();
+    return u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+  };
+  const unitSuffix = (unit) => {
+    const u = String(unit || 'piece').toLowerCase();
+    return u === 'piece' ? '' : u;
+  };
+  const formatItemQty = (item) => {
+    const n = Number(item?.quantity) || 0;
+    if (isWeighedUnit(item?.unit)) {
+      const trimmed = Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(3)).toString();
+      return `${trimmed} ${unitSuffix(item?.unit)}`;
+    }
+    return String(Math.round(n) || 1);
+  };
 
   // Payment modal state
   const [paymentOrder, setPaymentOrder] = useState(null);
@@ -336,11 +374,19 @@ export default function AdminOrders() {
     setEditFormData({
       tableId: order.tableId,
       waitressId: order.waitressId,
-      guestCount: order.guestCount || 1,
-      items: JSON.parse(JSON.stringify(order.items || [])),
+      guestCount: Number(order.guestCount) || 1,
+      items: (order.items || []).map(item => ({
+        id: item.id,
+        menuItemId: item.menuItemId || item.id,
+        name: item.name || item.itemName,
+        unitPrice: Number(item.unitPrice) || 0,
+        quantity: Number(item.quantity) || 1,
+        unit: String(item.unit || 'piece').toLowerCase(),
+      })),
       notes: order.notes || '',
     });
     setSearchMenuQuery('');
+    setAmountPicker(null);
   };
 
   const saveEditedOrder = async () => {
@@ -361,8 +407,16 @@ export default function AdminOrders() {
   };
 
   const updateItemQuantity = (idx, delta) => {
-    const updatedItems = editFormData.items.map((item, i) =>
-      i === idx ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
+    const item = editFormData.items[idx];
+    if (!item) return;
+    // For weighed items (kg/L), tapping +/- opens the amount picker so the
+    // user can enter a precise amount instead of incrementing by 1.
+    if (isWeighedUnit(item.unit)) {
+      setAmountPicker({ idx, item, draft: item.quantity ? String(item.quantity) : '' });
+      return;
+    }
+    const updatedItems = editFormData.items.map((it, i) =>
+      i === idx ? { ...it, quantity: Math.max(1, (Number(it.quantity) || 1) + delta) } : it
     );
     setEditFormData({ ...editFormData, items: updatedItems });
   };
@@ -373,6 +427,11 @@ export default function AdminOrders() {
   };
 
   const addMenuItemToOrder = (menuItem) => {
+    // Weighed items (kg/L) open the amount picker instead of adding qty=1
+    if (isWeighedUnit(menuItem.unit)) {
+      setAmountPicker({ idx: null, item: menuItem, draft: '' });
+      return;
+    }
     const existsIdx = editFormData.items.findIndex(
       item => item.menuItemId === menuItem.id || item.id === menuItem.id
     );
@@ -387,12 +446,55 @@ export default function AdminOrders() {
             id: menuItem.id,
             menuItemId: menuItem.id,
             name: menuItem.name,
-            unitPrice: menuItem.price,
+            unitPrice: Number(menuItem.price) || 0,
             quantity: 1,
+            unit: String(menuItem.unit || 'piece').toLowerCase(),
           },
         ],
       });
     }
+    setSearchMenuQuery('');
+  };
+
+  // Confirm amount entered in the kg/L picker
+  const confirmAmountPicker = () => {
+    if (!amountPicker) return;
+    const raw = String(amountPicker.draft || '').replace(',', '.').trim();
+    const amt = parseFloat(raw);
+    if (!isFinite(amt) || amt <= 0) { setAmountPicker(null); return; }
+    const rounded = Math.round(amt * 1000) / 1000; // 3 dp max
+    const { idx, item } = amountPicker;
+    if (idx != null) {
+      // Update existing item's quantity
+      setEditFormData(f => ({
+        ...f,
+        items: f.items.map((it, i) => i === idx ? { ...it, quantity: rounded } : it),
+      }));
+    } else {
+      // Add new weighed item (or update existing with same menu_item_id)
+      const existsIdx = editFormData.items.findIndex(
+        it => it.menuItemId === item.id || it.id === item.id
+      );
+      if (existsIdx >= 0) {
+        setEditFormData(f => ({
+          ...f,
+          items: f.items.map((it, i) => i === existsIdx ? { ...it, quantity: rounded } : it),
+        }));
+      } else {
+        setEditFormData(f => ({
+          ...f,
+          items: [...f.items, {
+            id: item.id,
+            menuItemId: item.id,
+            name: item.name,
+            unitPrice: Number(item.price) || 0,
+            quantity: rounded,
+            unit: String(item.unit || 'piece').toLowerCase(),
+          }],
+        }));
+      }
+    }
+    setAmountPicker(null);
     setSearchMenuQuery('');
   };
 
@@ -1220,7 +1322,7 @@ export default function AdminOrders() {
                           className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
                           <Minus size={14} />
                         </button>
-                        <span className="w-8 text-center text-sm font-bold text-gray-900">{item.quantity}</span>
+                        <span className={`${isWeighedUnit(item.unit) ? 'min-w-[4rem] px-2' : 'w-8'} text-center text-sm font-bold text-gray-900`}>{formatItemQty(item)}</span>
                         <button onClick={() => updateItemQuantity(idx, 1)}
                           className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
                           <Plus size={14} />
@@ -1256,7 +1358,10 @@ export default function AdminOrders() {
                     <div key={item.id} className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
                       <div>
                         <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
-                        <p className="text-xs text-blue-600 font-medium">{money(item.price || 0)}</p>
+                        <p className="text-xs text-blue-600 font-medium">
+                          {money(item.price || 0)}
+                          {isWeighedUnit(item.unit) ? ` / ${unitSuffix(item.unit)}` : ''}
+                        </p>
                       </div>
                       <button onClick={() => addMenuItemToOrder(item)}
                         className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
@@ -1280,6 +1385,103 @@ export default function AdminOrders() {
                   rows="2"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Amount Picker Modal (kg/L items in Edit Order) ── */}
+      {amountPicker && (
+        <div
+          className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4"
+          onClick={() => setAmountPicker(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+                  {t('admin.newOrder.enterAmount', 'Enter amount')}
+                </p>
+                <p className="text-base font-bold text-gray-900">
+                  {amountPicker.item.name}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {Number(amountPicker.item.price || amountPicker.item.unitPrice || 0).toLocaleString()} so'm / {unitSuffix(amountPicker.item.unit)}
+                </p>
+              </div>
+              <button
+                onClick={() => setAmountPicker(null)}
+                className="p-1 rounded-lg hover:bg-gray-100"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="number"
+                step="0.001"
+                min="0"
+                inputMode="decimal"
+                autoFocus
+                value={amountPicker.draft}
+                onChange={(e) => setAmountPicker(p => ({ ...p, draft: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmAmountPicker();
+                  if (e.key === 'Escape') setAmountPicker(null);
+                }}
+                placeholder="0.000"
+                className="w-full px-4 py-3 pr-14 border border-gray-300 rounded-xl text-2xl font-bold text-gray-900 focus:outline-none focus:border-blue-500"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg">
+                {unitSuffix(amountPicker.item.unit)}
+              </span>
+            </div>
+
+            {/* Quick presets */}
+            <div className="flex gap-2 mt-3">
+              {['0.25', '0.5', '1', '1.5', '2'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setAmountPicker(s => ({ ...s, draft: p }))}
+                  className="flex-1 px-2 py-2 rounded-lg text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Live total */}
+            {(() => {
+              const a = parseFloat(String(amountPicker.draft || '').replace(',', '.')) || 0;
+              const price = Number(amountPicker.item.price || amountPicker.item.unitPrice || 0);
+              const total = a * price;
+              return (
+                <div className="mt-4 flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                  <span className="text-sm text-gray-600">{t('common.total', 'Total')}</span>
+                  <span className="text-lg font-extrabold text-gray-900">
+                    {Math.round(total).toLocaleString()} so'm
+                  </span>
+                </div>
+              );
+            })()}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setAmountPicker(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={confirmAmountPicker}
+                className="flex-1 py-2.5 rounded-xl text-white font-semibold bg-blue-600 hover:bg-blue-700"
+              >
+                {amountPicker.idx != null ? t('common.save', 'Save') : t('common.add', 'Add')}
+              </button>
             </div>
           </div>
         </div>
