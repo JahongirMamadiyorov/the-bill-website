@@ -52,6 +52,26 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
 
   // ── Cart ──
   const [cart, setCart] = useState({});
+  // Amount picker for kg/l items: { item, draft }
+  const [amountPicker, setAmountPicker] = useState(null);
+
+  // Helper — true if this item must be sold by weight/volume (decimal amount)
+  const isWeighedItem = (item) => {
+    const u = String(item?.unit || 'piece').toLowerCase();
+    return u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+  };
+  const unitSuffix = (item) => {
+    const u = String(item?.unit || 'piece').toLowerCase();
+    return u === 'piece' ? '' : u;
+  };
+  const formatQty = (item, qty) => {
+    if (isWeighedItem(item)) {
+      const n = Number(qty || 0);
+      const trimmed = Number.isInteger(n) ? String(n) : n.toFixed(3).replace(/\.?0+$/, '');
+      return `${trimmed} ${unitSuffix(item)}`;
+    }
+    return `× ${qty}`;
+  };
 
   // ── Customer info (To Go / Delivery) ──
   const [customerName,    setCustomerName]    = useState('');
@@ -117,16 +137,35 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
 
   // ── Cart helpers ──
   const addToCart = (item) => {
+    // Weighed items open the amount picker instead of incrementing by 1
+    if (isWeighedItem(item)) {
+      const current = cart[item.id]?.qty || '';
+      setAmountPicker({ item, draft: current ? String(current) : '' });
+      return;
+    }
     setCart(prev => ({
       ...prev,
       [item.id]: { item, qty: (prev[item.id]?.qty || 0) + 1 },
     }));
   };
 
+  // Confirm the amount entered in the picker — sets the qty to that amount
+  const confirmAmountPicker = () => {
+    if (!amountPicker) return;
+    const raw = String(amountPicker.draft || '').replace(',', '.').trim();
+    const amt = parseFloat(raw);
+    if (!isFinite(amt) || amt <= 0) { setAmountPicker(null); return; }
+    const rounded = Math.round(amt * 1000) / 1000; // 3 dp max
+    const item = amountPicker.item;
+    setCart(prev => ({ ...prev, [item.id]: { item, qty: rounded } }));
+    setAmountPicker(null);
+  };
+
   const removeFromCart = (item) => {
     setCart(prev => {
       const cur = prev[item.id]?.qty || 0;
-      if (cur <= 1) {
+      // Weighed items: tapping minus clears the entry (use picker to change)
+      if (isWeighedItem(item) || cur <= 1) {
         const next = { ...prev };
         delete next[item.id];
         return next;
@@ -315,38 +354,55 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
             <p className="text-sm">{t("admin.newOrder.cartEmpty")}</p>
           </div>
         )}
-        {cartEntries.map(({ item, qty }) => (
-          <div key={item.id} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs text-gray-900 truncate">{item.name}</p>
-              <p className="text-xs text-gray-400">{formatPrice(item.price)}</p>
+        {cartEntries.map(({ item, qty }) => {
+          const weighed = isWeighedItem(item);
+          return (
+            <div key={item.id} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-xs text-gray-900 truncate">{item.name}</p>
+                <p className="text-xs text-gray-400">
+                  {formatPrice(item.price)}{weighed ? ` / ${unitSuffix(item)}` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {weighed ? (
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="px-2 h-6 rounded-full flex items-center gap-1 text-[11px] font-bold text-white"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    {formatQty(item, qty)}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => removeFromCart(item)}
+                      className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                    >
+                      <Minus size={10} className="text-gray-600" />
+                    </button>
+                    <span className="font-bold text-gray-900 w-4 text-center text-xs">{qty}</span>
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: PRIMARY }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
+                    >
+                      <Plus size={10} className="text-white" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => removeItemFromCart(item.id)}
+                  className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 ml-0.5"
+                >
+                  <Trash2 size={10} className="text-red-500" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <button
-                onClick={() => removeFromCart(item)}
-                className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100"
-              >
-                <Minus size={10} className="text-gray-600" />
-              </button>
-              <span className="font-bold text-gray-900 w-4 text-center text-xs">{qty}</span>
-              <button
-                onClick={() => addToCart(item)}
-                className="w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: PRIMARY }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
-              >
-                <Plus size={10} className="text-white" />
-              </button>
-              <button
-                onClick={() => removeItemFromCart(item.id)}
-                className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 ml-0.5"
-              >
-                <Trash2 size={10} className="text-red-500" />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {cartEntries.length > 0 && (
         <div className="pt-3 border-t border-gray-100">
@@ -405,7 +461,9 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
             >
               <div className="flex-1 min-w-0 mr-3">
                 <p className={`font-semibold text-sm truncate ${avail ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</p>
-                <p className={`text-sm mt-0.5 ${avail ? 'text-gray-400' : 'text-gray-300'}`}>{formatPrice(item.price)}</p>
+                <p className={`text-sm mt-0.5 ${avail ? 'text-gray-400' : 'text-gray-300'}`}>
+                  {formatPrice(item.price)}{isWeighedItem(item) ? ` / ${unitSuffix(item)}` : ''}
+                </p>
                 {!avail && <p className="text-[10px] font-bold text-red-500 mt-0.5">{t("admin.menu.inactive")}</p>}
               </div>
               {avail ? (
@@ -418,6 +476,14 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
                   >
                     <Plus size={16} className="text-white" />
+                  </button>
+                ) : isWeighedItem(item) ? (
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="px-3 h-8 rounded-full flex items-center gap-1 text-xs font-bold text-white"
+                    style={{ backgroundColor: PRIMARY }}
+                  >
+                    {formatQty(item, qty)}
                   </button>
                 ) : (
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -738,7 +804,9 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                   >
                     <div className="flex-1 min-w-0 mr-3">
                       <p className={`font-semibold text-sm truncate ${avail ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</p>
-                      <p className={`text-sm mt-0.5 ${avail ? 'text-gray-500' : 'text-gray-300'}`}>{formatPrice(item.price)}</p>
+                      <p className={`text-sm mt-0.5 ${avail ? 'text-gray-500' : 'text-gray-300'}`}>
+                        {formatPrice(item.price)}{isWeighedItem(item) ? ` / ${unitSuffix(item)}` : ''}
+                      </p>
                       {!avail && <p className="text-xs font-bold text-red-500 mt-0.5">{t("admin.menu.inactive")}</p>}
                     </div>
                     {avail ? (
@@ -751,6 +819,14 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                           onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
                         >
                           <Plus size={18} className="text-white" />
+                        </button>
+                      ) : isWeighedItem(item) ? (
+                        <button
+                          onClick={() => addToCart(item)}
+                          className="px-3 h-9 rounded-lg flex items-center gap-1 text-sm font-bold text-white"
+                          style={{ backgroundColor: PRIMARY }}
+                        >
+                          {formatQty(item, qty)}
                         </button>
                       ) : (
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -929,29 +1005,45 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  {cartEntries.map(({ item, qty }) => (
+                  {cartEntries.map(({ item, qty }) => {
+                    const weighed = isWeighedItem(item);
+                    return (
                     <div key={item.id} className="flex items-center gap-3 py-2.5 px-3 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-gray-900 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-400">{formatPrice(item.price)} {t('common.each')}</p>
+                        <p className="text-xs text-gray-400">
+                          {formatPrice(item.price)} {weighed ? `/ ${unitSuffix(item)}` : t('common.each')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => removeFromCart(item)}
-                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 bg-white"
-                        >
-                          <Minus size={12} className="text-gray-600" />
-                        </button>
-                        <span className="font-bold text-gray-900 w-5 text-center text-sm">{qty}</span>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: PRIMARY }}
-                          onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
-                          onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
-                        >
-                          <Plus size={12} className="text-white" />
-                        </button>
+                        {weighed ? (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="px-3 h-7 rounded-lg flex items-center gap-1 text-xs font-bold text-white"
+                            style={{ backgroundColor: PRIMARY }}
+                          >
+                            {formatQty(item, qty)}
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => removeFromCart(item)}
+                              className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 bg-white"
+                            >
+                              <Minus size={12} className="text-gray-600" />
+                            </button>
+                            <span className="font-bold text-gray-900 w-5 text-center text-sm">{qty}</span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center"
+                              style={{ backgroundColor: PRIMARY }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = PRIMARY_DARK}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = PRIMARY}
+                            >
+                              <Plus size={12} className="text-white" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => removeItemFromCart(item.id)}
                           className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center hover:bg-red-100 ml-0.5"
@@ -960,7 +1052,8 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                         </button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {/* Subtotal in cart area */}
                   <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-200">
                     <span className="text-sm font-semibold text-gray-600">{t('common.total')}</span>
@@ -997,6 +1090,101 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
 
       {/* ── Table Picker Modal ── */}
       <TablePickerModal />
+
+      {/* ── Amount Picker Modal (kg / l items) ── */}
+      {amountPicker && (
+        <div
+          className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4"
+          onClick={() => setAmountPicker(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+                  {t('admin.newOrder.enterAmount', 'Enter amount')}
+                </p>
+                <p className="text-base font-bold text-gray-900">{amountPicker.item.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {Number(amountPicker.item.price || 0).toLocaleString()} so'm / {unitSuffix(amountPicker.item)}
+                </p>
+              </div>
+              <button
+                onClick={() => setAmountPicker(null)}
+                className="p-1 rounded-lg hover:bg-gray-100"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="number"
+                step="0.001"
+                min="0"
+                inputMode="decimal"
+                autoFocus
+                value={amountPicker.draft}
+                onChange={(e) => setAmountPicker(p => ({ ...p, draft: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmAmountPicker();
+                  if (e.key === 'Escape') setAmountPicker(null);
+                }}
+                placeholder="0.000"
+                className="w-full px-4 py-3 pr-14 border border-gray-300 rounded-xl text-2xl font-bold text-gray-900 focus:outline-none focus:border-blue-500"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg">
+                {unitSuffix(amountPicker.item)}
+              </span>
+            </div>
+
+            {/* Quick presets */}
+            <div className="flex gap-2 mt-3">
+              {['0.25', '0.5', '1', '1.5', '2'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setAmountPicker(s => ({ ...s, draft: p }))}
+                  className="flex-1 px-2 py-2 rounded-lg text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Live total */}
+            {(() => {
+              const a = parseFloat(String(amountPicker.draft || '').replace(',', '.')) || 0;
+              const total = a * Number(amountPicker.item.price || 0);
+              return (
+                <div className="mt-4 flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                  <span className="text-sm text-gray-600">{t('common.total', 'Total')}</span>
+                  <span className="text-lg font-extrabold text-gray-900">
+                    {Math.round(total).toLocaleString()} so'm
+                  </span>
+                </div>
+              );
+            })()}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setAmountPicker(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={confirmAmountPicker}
+                className="flex-1 py-2.5 rounded-xl text-white font-semibold"
+                style={{ backgroundColor: PRIMARY }}
+              >
+                {t('common.add', 'Add')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

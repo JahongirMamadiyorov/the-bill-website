@@ -378,8 +378,13 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
               <div class="dashed"></div>
               ${items.map(it => {
                 const p = parseFloat(it.unitPrice || 0);
-                const q = it.quantity || 1;
-                return `<div class="row"><span class="row-label">${it.name || it.menuItemName || '—'} × ${q}</span><span>${money(p * q)}</span></div>`;
+                const q = parseFloat(it.quantity) || 1;
+                const u = String(it.unit || 'piece').toLowerCase();
+                const weighed = u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+                const qtyLabel = weighed
+                  ? `${Number.isInteger(q) ? q : parseFloat(q.toFixed(3))} ${u}`
+                  : `× ${q}`;
+                return `<div class="row"><span class="row-label">${it.name || it.menuItemName || '—'} ${qtyLabel}</span><span>${money(p * q)}</span></div>`;
               }).join('')}
               <div class="dashed"></div>
               <div class="row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
@@ -400,8 +405,9 @@ function PaymentPanel({ order, taxSettings, restSettings, onPaid, onBack }) {
               dateTime: fmtDateTime(),
               items: items.map(it => ({
                 name: it.name || it.menuItemName || '—',
-                qty: it.quantity || 1,
-                total: money(parseFloat(it.unitPrice || 0) * (it.quantity || 1)),
+                qty: parseFloat(it.quantity) || 1,
+                unit: String(it.unit || 'piece').toLowerCase(),
+                total: money(parseFloat(it.unitPrice || 0) * (parseFloat(it.quantity) || 1)),
               })),
               subtotal: money(subtotal),
               taxRate: taxSettings?.taxRate,

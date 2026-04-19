@@ -422,8 +422,13 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       <div class="dashed"></div>
       ${items.map(it => {
         const p = it.unitPrice || it.price || 0;
-        const q = it.quantity || it.qty || 1;
-        return `<div class="row"><span class="row-label">${it.name || it.menuItemName || '—'} × ${q}</span><span>${money(p * q)}</span></div>`;
+        const q = parseFloat(it.quantity ?? it.qty) || 1;
+        const u = String(it.unit || 'piece').toLowerCase();
+        const weighed = u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+        const qtyLabel = weighed
+          ? `${Number.isInteger(q) ? q : parseFloat(q.toFixed(3))} ${u}`
+          : `× ${q}`;
+        return `<div class="row"><span class="row-label">${it.name || it.menuItemName || '—'} ${qtyLabel}</span><span>${money(p * q)}</span></div>`;
       }).join('')}
       <div class="dashed"></div>
       <div class="row"><span>${t('common.subtotal')}</span><span>${money(orderTotal)}</span></div>
@@ -442,8 +447,9 @@ function OrderPanel({ order, taxSettings, restSettings, user, onBack, onPaid }) 
       dateTime: fmtDate(new Date()),
       items: items.map(it => ({
         name: it.name || it.menuItemName || '—',
-        qty: it.quantity || it.qty || 1,
-        total: money((it.unitPrice || it.price || 0) * (it.quantity || it.qty || 1)),
+        qty: parseFloat(it.quantity ?? it.qty) || 1,
+        unit: String(it.unit || 'piece').toLowerCase(),
+        total: money((it.unitPrice || it.price || 0) * (parseFloat(it.quantity ?? it.qty) || 1)),
       })),
       subtotal: money(orderTotal),
       discountReason: pf.discReason || undefined,

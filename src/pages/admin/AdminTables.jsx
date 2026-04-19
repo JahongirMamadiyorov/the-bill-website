@@ -211,17 +211,29 @@ export default function AdminTables() {
     } catch (_) {}
   }, [call, allSections]);
 
+  // Snapshot signature of last applied tables payload — used to skip
+  // setTables when the polled data is unchanged (avoids re-render blink).
+  const lastTablesSigRef = useRef('');
+  const tablesSignature = (arr) =>
+    arr
+      .map(t => `${t.id}:${t.status}:${t.occupied_since || ''}:${t.section || ''}:${t.capacity || ''}:${t.table_name || t.tableName || ''}:${t.active_order_id || t.activeOrderId || ''}`)
+      .join('|');
+
   const fetchTables = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const data = await call(tablesAPI.getAll);
       const arr = Array.isArray(data) ? data : [];
-      setTables(arr);
-      // keep selectedTable in sync with latest data
-      setSelectedTable(prev => {
-        if (!prev) return null;
-        return arr.find(t => t.id === prev.id) || null;
-      });
+      const sig = tablesSignature(arr);
+      if (sig !== lastTablesSigRef.current) {
+        lastTablesSigRef.current = sig;
+        setTables(arr);
+        // keep selectedTable in sync with latest data
+        setSelectedTable(prev => {
+          if (!prev) return null;
+          return arr.find(t => t.id === prev.id) || null;
+        });
+      }
       setError(null);
     } catch (err) {
       console.error('Failed to fetch tables:', err);
@@ -234,11 +246,11 @@ export default function AdminTables() {
   useEffect(() => {
     fetchTables();
     fetchSections();
-    // Poll tables every second to stay in sync. Sections refresh every 5s so
-    // that adds/deletes performed on the app or by other admins propagate
-    // here without leaving stale chips behind.
-    pollRef.current = setInterval(() => fetchTables(true), 1000);
-    const sectionsPoll = setInterval(() => fetchSections(), 5000);
+    // Poll tables every 5s to stay in sync without flashing the grid.
+    // setTables is skipped when the payload signature hasn't changed, so this
+    // is essentially free when nothing is happening.
+    pollRef.current = setInterval(() => fetchTables(true), 5000);
+    const sectionsPoll = setInterval(() => fetchSections(), 8000);
     return () => {
       clearInterval(pollRef.current);
       clearInterval(sectionsPoll);

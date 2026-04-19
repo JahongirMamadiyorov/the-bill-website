@@ -442,6 +442,8 @@
       "itemName": "Item Name *",
       "itemNamePlaceholder": "e.g. Caesar Salad",
       "priceSom": "Price (so'm) *",
+      "unit": "Unit",
+      "unitPiece": "piece",
       "descriptionPlaceholder": "Optional description shown on menu",
       "activeVisibleOnMenu": "Active -- visible on menu",
       "hiddenFromMenu": "Hidden from menu",

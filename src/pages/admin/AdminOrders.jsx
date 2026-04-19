@@ -1302,12 +1302,55 @@ export default function AdminOrders() {
         ];
 
         const handlePrintCheque = () => {
-          const w = window.open('', '_blank', 'width=350,height=600');
+          const w = window.open('', '_blank', 'width=380,height=700');
           if (!w) return;
-          const itemsHtml = orderItems.map(i =>
-            `<tr><td style="padding:4px 0;font-size:13px">${i.name || i.itemName || 'Item'}</td><td style="padding:4px 8px;text-align:center;font-size:13px">${i.quantity || 1}</td><td style="padding:4px 0;text-align:right;font-size:13px">${money((i.unitPrice || i.unit_price || i.price || 0) * (i.quantity || 1))}</td></tr>`
-          ).join('');
-          w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title><style>body{font-family:monospace;padding:20px;max-width:300px;margin:0 auto}h2{text-align:center;margin:0 0 4px}p.sub{text-align:center;color:#666;font-size:12px;margin:0 0 16px}hr{border:none;border-top:1px dashed #999;margin:12px 0}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;color:#666;border-bottom:1px solid #ddd;padding:4px 0}th:nth-child(2){text-align:center}th:nth-child(3){text-align:right}.total{font-size:18px;font-weight:bold;text-align:right;margin:8px 0}.footer{text-align:center;font-size:11px;color:#999;margin-top:16px}@media print{body{padding:0}}</style></head><body><h2>Receipt</h2><p class="sub">Order #${paymentOrder.dailyNumber || '—'}${paymentOrder.tableId ? ' · Table ' + getTableNumber(paymentOrder.tableId) : ''}</p><p class="sub">${new Date().toLocaleString()}</p><hr/><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr/>${discountAmt > 0 ? '<div style="display:flex;justify-content:space-between;font-size:13px"><span>Subtotal</span><span>' + money(orderTotal) + '</span></div><div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a"><span>Discount</span><span>-' + money(discountAmt) + '</span></div><hr/>' : ''}<div class="total">${money(totalToPay)}</div><div style="text-align:center;font-size:12px;color:#666;margin-bottom:4px">Payment: ${(pf.paymentMethod || 'cash').replace('_',' ')}</div>${pf.paymentMethod === 'cash' && change > 0 ? '<div style="text-align:center;font-size:12px;color:#16a34a">Change: ' + money(change) + '</div>' : ''}<hr/><p class="footer">Thank you for dining with us!</p></body></html>`);
+          const itemsHtml = orderItems.map(i => {
+            const qty = parseFloat(i.quantity) || 1;
+            const total = (i.unitPrice || i.unit_price || i.price || 0) * qty;
+            const u = String(i.unit || 'piece').toLowerCase();
+            const weighed = u === 'kg' || u === 'l' || u === 'g' || u === 'ml';
+            const qtyLabel = weighed
+              ? `${Number.isInteger(qty) ? qty : parseFloat(qty.toFixed(3))} ${u}`
+              : `× ${qty}`;
+            return `<div class="row"><span class="row-label">${i.name || i.itemName || 'Item'} ${qtyLabel}</span><span>${money(total)}</span></div>`;
+          }).join('');
+          const css = `
+            @page { size: 80mm auto; margin: 3mm 0; }
+            html, body { margin: 0; padding: 0; background: #fff; }
+            body { font-family: 'Courier New', 'Menlo', monospace; font-size: 15px; line-height: 1.35; color: #000; width: 76mm; margin: 0 auto; padding: 3mm 2mm; box-sizing: border-box; }
+            .center { text-align: center; }
+            .rest-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.5px; }
+            .gray { color: #222; font-size: 13px; }
+            .dashed { border-top: 1px dashed #000; margin: 6px 0; }
+            .row { display: flex; justify-content: space-between; align-items: baseline; margin: 3px 0; word-break: break-word; }
+            .row-label { flex: 1; padding-right: 6px; }
+            .total-row { font-size: 20px; font-weight: 800; margin: 4px 0; }
+            .footer { margin-top: 10px; font-size: 13px; color: #222; text-align: center; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+          `;
+          const headerLine = `Order #${paymentOrder.dailyNumber || '—'}${paymentOrder.tableId ? ' · Table ' + getTableNumber(paymentOrder.tableId) : ''}`;
+          const discountBlock = discountAmt > 0
+            ? `<div class="row"><span>Subtotal</span><span>${money(orderTotal)}</span></div><div class="row"><span>Discount</span><span>-${money(discountAmt)}</span></div><div class="dashed"></div>`
+            : '';
+          const changeBlock = (pf.paymentMethod === 'cash' && change > 0)
+            ? `<div class="row"><span>Change</span><span>${money(change)}</span></div>`
+            : '';
+          w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title><style>${css}</style></head><body>
+            <div class="center"><div class="rest-name">Receipt</div>
+              <div class="gray">${headerLine}</div>
+              <div class="gray">${new Date().toLocaleString()}</div>
+            </div>
+            <div class="dashed"></div>
+            ${itemsHtml}
+            <div class="dashed"></div>
+            ${discountBlock}
+            <div class="row total-row"><span>Total</span><span>${money(totalToPay)}</span></div>
+            <div class="dashed"></div>
+            <div class="row"><span>Payment</span><span>${(pf.paymentMethod || 'cash').replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
+            ${changeBlock}
+            <div class="dashed"></div>
+            <div class="footer">Thank you for dining with us!</div>
+          </body></html>`);
           w.document.close();
           setTimeout(() => { w.print(); }, 300);
         };
