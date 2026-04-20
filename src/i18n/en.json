@@ -73,7 +73,9 @@
     "other": "Other",
     "notProvided": "Not provided",
     "allPurpose": "All-purpose",
-    "preview": "Preview"
+    "preview": "Preview",
+    "table": "Table",
+    "orderNumber": "Order #"
   },
 
   "login": {
@@ -1056,7 +1058,15 @@
       "failedToLoad": "Failed to load loans",
       "unknown": "Unknown",
       "allStatuses": "All",
-      "tapDateHint": "Tap a date to set start/end"
+      "tapDateHint": "Tap a date to set start/end",
+      "loanDetails": "Loan Details",
+      "takenOn": "Taken on",
+      "paidOn": "Paid on",
+      "orderItems": "Order Items",
+      "noOrderLinked": "No order linked to this loan",
+      "noItems": "No items on this order",
+      "paidVia": "Paid via",
+      "couldNotLoadOrder": "Could not load order"
     },
     "profile": {
       "ordersToday": "Orders Today",

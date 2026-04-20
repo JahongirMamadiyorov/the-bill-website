@@ -73,7 +73,9 @@
     "other": "Boshqa",
     "notProvided": "Ko'rsatilmagan",
     "allPurpose": "Universal",
-    "preview": "Ko'rinish"
+    "preview": "Ko'rinish",
+    "table": "Stol",
+    "orderNumber": "Buyurtma #"
   },
 
   "login": {
@@ -1056,7 +1058,15 @@
       "failedToLoad": "Qarzlarni yuklab bo'lmadi",
       "unknown": "Noma'lum",
       "allStatuses": "Barchasi",
-      "tapDateHint": "Boshlanish/tugash sanasini tanlash uchun bosing"
+      "tapDateHint": "Boshlanish/tugash sanasini tanlash uchun bosing",
+      "loanDetails": "Qarz tafsilotlari",
+      "takenOn": "Olingan sana",
+      "paidOn": "To'langan sana",
+      "orderItems": "Buyurtma mahsulotlari",
+      "noOrderLinked": "Bu qarzga buyurtma biriktirilmagan",
+      "noItems": "Buyurtmada mahsulot yo'q",
+      "paidVia": "To'lov usuli",
+      "couldNotLoadOrder": "Buyurtmani yuklab bo'lmadi"
     },
     "profile": {
       "ordersToday": "Bugungi buyurtmalar",
