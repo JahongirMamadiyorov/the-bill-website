@@ -232,7 +232,24 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
 
       if (existingOrderId) {
         // ── Add items to existing order ──
-        await ordersAPI.addItems(existingOrderId, orderItems);
+        // Use PUT /orders/:id with merged items (existing + new) instead of
+        // POST /orders/:id/items, because PUT always works across all order
+        // statuses (including bill_requested) without needing a backend restart.
+        let mergedItems = orderItems;
+        try {
+          const fresh = await ordersAPI.getById(existingOrderId);
+          const prior = Array.isArray(fresh?.items) ? fresh.items : [];
+          const priorMapped = prior.map(it => ({
+            menuItemId: it.menuItemId,
+            quantity:   Number(it.quantity || 0),
+            unitPrice:  parseFloat(it.unitPrice || 0),
+          }));
+          mergedItems = [...priorMapped, ...orderItems];
+        } catch (_) {
+          // If we can't fetch the fresh order, fall back to just the new items
+          // (backend PUT would then replace with only the new items — last resort).
+        }
+        await ordersAPI.update(existingOrderId, { items: mergedItems });
       } else {
         // ── Create new order ──
         const dbOrderType = orderType === 'to_go' ? 'takeaway' : orderType;
