@@ -955,6 +955,7 @@
   },
 
   "cashier": {
+    "printItem": "Mahsulotni chiqarish",
     "orders": {
       "title": "Kassir buyurtmalari",
       "allActive": "Barcha faol",

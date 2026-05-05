@@ -4,9 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, ShoppingCart, UtensilsCrossed, ShoppingBag, Truck,
   Minus, Plus, ChevronRight, AlertCircle, X, Trash2, Check,
-  Users, MapPin, Phone, User,
+  Users, MapPin, Phone, User, Printer,
 } from 'lucide-react';
 import { menuAPI, tablesAPI, ordersAPI } from '../../api/client';
+import { usePrinter } from '../../hooks/usePrinter';
 import PhoneInput from '../../components/PhoneInput';
 
 const getOrderTypes = (t) => [
@@ -82,6 +83,9 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
   const [placing,  setPlacing]  = useState(false);
   const [error,    setError]    = useState('');
   const [showCart, setShowCart] = useState(false); // only used in standalone mode
+
+  // ── Printer (cashier only) ──
+  const { printReceipt } = usePrinter();
 
   const pollRef = useRef(null);
 
@@ -209,6 +213,30 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
       return next;
     });
   };
+
+  // ── Print single item (cashier only) ──
+  const handlePrintItem = useCallback(async (item, qty) => {
+    const name     = item.name || '';
+    const weighed  = isWeighedItem(item);
+    const qtyLabel = weighed ? `${qty} ${unitSuffix(item)}` : `× ${qty}`;
+    const lineTotal = (Number(qty) * parseFloat(item.price || 0)).toLocaleString('uz-UZ');
+
+    const browserHtml = `
+      <div class="center">
+        <div class="rest-name">${name}</div>
+        <div class="dashed"></div>
+        <div class="row">
+          <span class="row-label">${qtyLabel}</span>
+          <span>${lineTotal} so'm</span>
+        </div>
+        <div class="dashed"></div>
+      </div>`;
+
+    await printReceipt({
+      browserHtml,
+      items: [{ name, qty: String(qty), total: lineTotal }],
+    });
+  }, [printReceipt]);
 
   // ── Validation ──
   const canPlace = () => {
@@ -437,6 +465,15 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                       <Plus size={10} className="text-white" />
                     </button>
                   </>
+                )}
+                {isCashier && (
+                  <button
+                    onClick={() => handlePrintItem(item, qty)}
+                    className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 ml-0.5"
+                    title={t('cashier.printItem')}
+                  >
+                    <Printer size={10} className="text-gray-500" />
+                  </button>
                 )}
                 <button
                   onClick={() => removeItemFromCart(item.id)}
@@ -1097,6 +1134,15 @@ export default function AdminNewOrder({ isModal = false, initialTable = null, on
                               <Plus size={12} className="text-white" />
                             </button>
                           </>
+                        )}
+                        {isCashier && (
+                          <button
+                            onClick={() => handlePrintItem(item, qty)}
+                            className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 ml-0.5"
+                            title={t('cashier.printItem')}
+                          >
+                            <Printer size={12} className="text-gray-500" />
+                          </button>
                         )}
                         <button
                           onClick={() => removeItemFromCart(item.id)}

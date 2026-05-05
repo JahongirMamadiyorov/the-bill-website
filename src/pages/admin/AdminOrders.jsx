@@ -389,7 +389,9 @@ export default function AdminOrders() {
 
   const getTableNumber = (tableId) => {
     const table = allTables.find(t => t.id === tableId);
-    return table ? table.tableNumber : tableId || t('admin.orders.na');
+    if (!table) return tableId || t('admin.orders.na');
+    // Prefer custom name (e.g. "Xovli 1"), fall back to numbered label
+    return table.name || `${t('admin.orders.tablePrefix')} ${table.tableNumber}`;
   };
 
   const openEditModal = (order) => {
@@ -1323,7 +1325,7 @@ export default function AdminOrders() {
                     onChange={(value) => setEditFormData({ ...editFormData, tableId: value || null })}
                     options={[
                       { value: '', label: t('common.select') },
-                      ...allTables.map(table => ({ value: table.id, label: `${t('admin.orders.tablePrefix')} ${table.tableNumber}` }))
+                      ...allTables.map(table => ({ value: table.id, label: table.name || `${t('admin.orders.tablePrefix')} ${table.tableNumber}` }))
                     ]}
                     size="sm"
                   />

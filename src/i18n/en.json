@@ -387,8 +387,8 @@
       "people": "people",
       "guest": "Guest",
       "time": "Time",
-      "tableCountInSystem": "{count} total {count, plural, one {table} other {tables}} in system",
-      "tableCountLabel": "{count} {count, plural, one {table} other {tables}}",
+      "tableCountInSystem": "{count} tables in system",
+      "tableCountLabel": "{count} tables",
       "refresh": "Refresh",
       "percentOfTables": "{percent}% of tables",
       "occupancyPercent": "{percent}% occupancy",
@@ -852,7 +852,7 @@
       "menuLabel": "Menu",
       "off": "OFF",
       "noItemsInCategory": "No items in this category",
-      "itemCount": "{count} {count, plural, one {item} other {items}}",
+      "itemCount": "{count} items",
       "priceEach": "{price} each",
       "enterAmount": "Enter amount",
       "amount": "Amount",
@@ -955,6 +955,7 @@
   },
 
   "cashier": {
+    "printItem": "Print item",
     "orders": {
       "title": "Cashier Orders",
       "allActive": "All Active",
