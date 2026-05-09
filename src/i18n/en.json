@@ -996,19 +996,29 @@
     },
 
     "printers": {
-      "mainPrinter": "Main Printer (Receipt)",
+      "receiptPrinters": "Receipt Printers",
+      "addReceiptPrinter": "Add receipt printer",
       "kitchenPrinters": "Kitchen Printers",
       "addKitchenPrinter": "Add kitchen printer",
       "printerName": "Printer name",
-      "printerNamePlaceholder": "e.g. Hot Kitchen",
+      "receiptPrinterNamePlaceholder": "e.g. Front Desk",
+      "kitchenPrinterNamePlaceholder": "e.g. Hot Kitchen",
       "ip": "Printer IP",
       "ipPlaceholder": "192.168.1.100",
       "port": "Port",
       "notConfigured": "Not configured — will use browser print",
       "assignedStations": "Assigned stations",
-      "allStations": "All stations",
-      "noStations": "No stations — handles all orders",
-      "removePrinter": "Remove printer"
+      "noStations": "No stations yet",
+      "noStationsHint": "Add stations below, then assign them to kitchen printers.",
+      "removePrinter": "Remove printer",
+      "emptyReceiptPrinters": "No receipt printers yet",
+      "emptyKitchenPrinters": "No kitchen printers yet",
+      "kitchenStations": "Kitchen Stations",
+      "addStation": "Add station",
+      "newStationPlaceholder": "Station name...",
+      "stationsLoadFailed": "Failed to load stations",
+      "confirmAddPrinter": "Add printer",
+      "noStationsConfigured": "No stations — this printer handles all kitchen orders"
     },
 
     "receipt": {

@@ -996,19 +996,29 @@
     },
 
     "printers": {
-      "mainPrinter": "Asosiy printer (Chek)",
+      "receiptPrinters": "Chek printerlari",
+      "addReceiptPrinter": "Chek printeri qo'shish",
       "kitchenPrinters": "Oshxona printerlari",
       "addKitchenPrinter": "Oshxona printeri qo'shish",
       "printerName": "Printer nomi",
-      "printerNamePlaceholder": "masalan: Issiq Oshxona",
+      "receiptPrinterNamePlaceholder": "masalan: Old stol",
+      "kitchenPrinterNamePlaceholder": "masalan: Issiq Oshxona",
       "ip": "Printer IP",
       "ipPlaceholder": "192.168.1.100",
       "port": "Port",
       "notConfigured": "Sozlanmagan — brauzer orqali chiqariladi",
       "assignedStations": "Tegishli stansiyalar",
-      "allStations": "Barcha stansiyalar",
-      "noStations": "Stansiya yo'q — barcha buyurtmalarni qabul qiladi",
-      "removePrinter": "Printerni o'chirish"
+      "noStations": "Hali stansiyalar yo'q",
+      "noStationsHint": "Quyida stansiya qo'shing, so'ng printerlarga belgilang.",
+      "removePrinter": "Printerni o'chirish",
+      "emptyReceiptPrinters": "Hali chek printeri yo'q",
+      "emptyKitchenPrinters": "Hali oshxona printeri yo'q",
+      "kitchenStations": "Oshxona stansiyalari",
+      "addStation": "Stansiya qo'shish",
+      "newStationPlaceholder": "Stansiya nomi...",
+      "stationsLoadFailed": "Stansiyalarni yuklab bo'lmadi",
+      "confirmAddPrinter": "Printer qo'shish",
+      "noStationsConfigured": "Stansiya yo'q — barcha oshxona buyurtmalarini qabul qiladi"
     },
 
     "receipt": {
