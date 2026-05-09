@@ -5,7 +5,7 @@ import { useTranslation } from '../context/LanguageContext';
 import {
   Home, BarChart3, Users, Package, Wallet, User, LayoutDashboard, Grid3X3,
   UtensilsCrossed, ClipboardList, ShoppingCart, History, Banknote, Bell,
-  TrendingUp, ChefHat, LogOut, Menu, X, ChevronLeft, ChevronRight, Building2, Shield, Languages
+  TrendingUp, ChefHat, LogOut, Menu, X, ChevronLeft, ChevronRight, Building2, Shield, Languages, Settings
 } from 'lucide-react';
 
 const ROLE_STYLE = {
@@ -38,6 +38,7 @@ const NAV_ITEMS = {
     { to: '/admin/orders', icon: ClipboardList, labelKey: 'nav.orders' },
     { to: '/admin/loans', icon: Banknote, labelKey: 'nav.loans' },
     { to: '/admin/staff', icon: Users, labelKey: 'nav.staff' },
+    { to: '/admin/settings', icon: Settings, labelKey: 'nav.settings' },
     { to: '/admin/profile', icon: User, labelKey: 'nav.profile' },
   ],
   cashier: [
