@@ -361,13 +361,10 @@ const EMPTY_RECEIPT_FORM = { name: '', ip: '', port: '9100' };
 const emptyKitchenForm = () => ({ name: '', ip: '', port: '9100', stations: [] });
 
 function PrintersPanel({ form, set, t }) {
-  // ── Station management ──
+  // ── Stations — loaded from Menu's custom_stations, read-only here ──
   const [stations,        setStations]        = useState([]);
   const [stationsLoading, setStationsLoading] = useState(true);
   const [stationError,    setStationError]    = useState(null);
-  const [newStation,      setNewStation]      = useState('');
-  const [addingStation,   setAddingStation]   = useState(false);
-  const [removingStation, setRemovingStation] = useState(null);
 
   // ── Add-form panels ──
   const [showReceiptForm, setShowReceiptForm] = useState(false);
@@ -389,35 +386,6 @@ function PrintersPanel({ form, set, t }) {
     }
   };
   useEffect(() => { loadStations(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Station CRUD ──
-  const handleAddStation = async () => {
-    const name = newStation.trim();
-    if (!name || addingStation) return;
-    setAddingStation(true);
-    try {
-      const data = await menuAPI.addStation(name);
-      setStations(Array.isArray(data) ? data : [...stations, { name }]);
-      setNewStation('');
-    } catch { /* already in DB or network error */ }
-    finally { setAddingStation(false); }
-  };
-
-  const handleRemoveStation = async (name) => {
-    setRemovingStation(name);
-    try {
-      await menuAPI.deleteStation(name);
-      setStations(prev => prev.filter(s => s.name !== name));
-      // Also remove from any kitchen printer that had it assigned
-      set('kitchenPrinters')(
-        (form.kitchenPrinters || []).map(p => ({
-          ...p,
-          stations: (p.stations || []).filter(s => s !== name),
-        }))
-      );
-    } catch { /* show nothing — station may still be in use */ }
-    finally { setRemovingStation(null); }
-  };
 
   // ── Receipt printer helpers ──
   const confirmAddReceiptPrinter = () => {
@@ -463,7 +431,7 @@ function PrintersPanel({ form, set, t }) {
     }));
   };
 
-  // ── Shared add-form ──
+  // ── Shared add-form panel ──
   const AddFormPanel = ({ draft, setDraft, namePlaceholder, onConfirm, onCancel, showStationPicker }) => (
     <Card className="border-blue-200 bg-blue-50/20">
       <div className="px-5 py-4 flex flex-col gap-4">
@@ -494,30 +462,48 @@ function PrintersPanel({ form, set, t }) {
           </Field>
         </div>
 
-        {showStationPicker && stations.length > 0 && (
+        {/* Station assignment — kitchen printers only */}
+        {showStationPicker && (
           <div className="flex flex-col gap-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               {t('settings.printers.assignedStations')}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {stations.map(s => {
-                const active = draft.stations.includes(s.name);
-                return (
-                  <button
-                    key={s.name}
-                    type="button"
-                    onClick={() => toggleDraftStation(s.name)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-                      active
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                );
-              })}
-            </div>
+            {stationsLoading && (
+              <p className="text-xs text-gray-400">{t('common.loading')}</p>
+            )}
+            {stationError && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle size={12} />{stationError}
+                <button type="button" onClick={loadStations} className="underline ml-1">{t('common.retry')}</button>
+              </p>
+            )}
+            {!stationsLoading && !stationError && stations.length === 0 && (
+              <p className="text-xs text-gray-400">{t('settings.printers.noStationsHint')}</p>
+            )}
+            {stations.length > 0 && (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {stations.map(s => {
+                    const active = draft.stations.includes(s.name);
+                    return (
+                      <button
+                        key={s.name}
+                        type="button"
+                        onClick={() => toggleDraftStation(s.name)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                          active
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-400">{t('settings.printers.noStationsConfigured')}</p>
+              </>
+            )}
           </div>
         )}
 
@@ -595,81 +581,6 @@ function PrintersPanel({ form, set, t }) {
 
       <div className="border-t border-gray-200" />
 
-      {/* ── Kitchen Stations ─────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-700">{t('settings.printers.kitchenStations')}</p>
-          {stationsLoading && (
-            <span className="text-xs text-gray-400">{t('common.loading')}</span>
-          )}
-          {stationError && !stationsLoading && (
-            <button type="button" onClick={loadStations} className="text-xs text-red-500 hover:underline">
-              {t('common.retry')}
-            </button>
-          )}
-        </div>
-
-        <Card>
-          <div className="px-5 py-4 flex flex-col gap-3">
-            {/* Existing station pills */}
-            {stations.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {stations.map(s => (
-                  <div
-                    key={s.name}
-                    className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-gray-100 rounded-full"
-                  >
-                    <span className="text-xs font-semibold text-gray-700">{s.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveStation(s.name)}
-                      disabled={removingStation === s.name}
-                      title={t('common.delete')}
-                      className="w-4 h-4 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-500 transition-colors disabled:opacity-40"
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {stationError && (
-              <p className="text-xs text-red-500 flex items-center gap-1.5">
-                <AlertCircle size={12} />{stationError}
-              </p>
-            )}
-
-            {!stationsLoading && stations.length === 0 && !stationError && (
-              <p className="text-xs text-gray-400">{t('settings.printers.noStations')}</p>
-            )}
-
-            {/* Add station inline */}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newStation}
-                onChange={e => setNewStation(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddStation(); } }}
-                placeholder={t('settings.printers.newStationPlaceholder')}
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-colors bg-white"
-              />
-              <button
-                type="button"
-                onClick={handleAddStation}
-                disabled={!newStation.trim() || addingStation}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0"
-              >
-                <Plus size={13} />
-                {t('settings.printers.addStation')}
-              </button>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="border-t border-gray-200" />
-
       {/* ── Kitchen Printers ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -685,6 +596,11 @@ function PrintersPanel({ form, set, t }) {
             </button>
           )}
         </div>
+
+        {/* Hint about where stations come from */}
+        {!stationsLoading && stations.length > 0 && (
+          <p className="text-xs text-gray-400">{t('settings.printers.stationsFromMenu')}</p>
+        )}
 
         {showKitchenForm && (
           <AddFormPanel

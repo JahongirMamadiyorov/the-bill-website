@@ -1013,12 +1013,10 @@
       "removePrinter": "Remove printer",
       "emptyReceiptPrinters": "No receipt printers yet",
       "emptyKitchenPrinters": "No kitchen printers yet",
-      "kitchenStations": "Kitchen Stations",
-      "addStation": "Add station",
-      "newStationPlaceholder": "Station name...",
       "stationsLoadFailed": "Failed to load stations",
       "confirmAddPrinter": "Add printer",
-      "noStationsConfigured": "No stations — this printer handles all kitchen orders"
+      "noStationsConfigured": "Leave blank to receive all kitchen orders",
+      "stationsFromMenu": "Stations come from Menu settings — assign here to route orders to the right printer"
     },
 
     "receipt": {
