@@ -357,118 +357,21 @@ function FinancialPanel({ form, set, t }) {
 }
 
 // ── Same preset station names the Menu page uses ──────────────────────────────
-// AdminMenu.jsx has these hardcoded; we mirror them here so station lists match.
 const PRESET_STATION_NAMES = ['Salad', 'Grill', 'Bar', 'Pastry', 'Cold', 'Hot'];
 
 // ── Empty add-form state helpers ──────────────────────────────────────────────
 const EMPTY_RECEIPT_FORM = { name: '', ip: '', port: '9100' };
 const emptyKitchenForm = () => ({ name: '', ip: '', port: '9100', stations: [] });
 
-function PrintersPanel({ form, set, t }) {
-  // ── Stations — loaded from Menu's custom_stations, read-only here ──
-  const [stations,        setStations]        = useState([]);
-  const [stationsLoading, setStationsLoading] = useState(true);
-  const [stationError,    setStationError]    = useState(null);
-
-  // ── Add-form panels ──
-  const [showReceiptForm, setShowReceiptForm] = useState(false);
-  const [receiptDraft,    setReceiptDraft]    = useState(EMPTY_RECEIPT_FORM);
-  const [showKitchenForm, setShowKitchenForm] = useState(false);
-  const [kitchenDraft,    setKitchenDraft]    = useState(emptyKitchenForm());
-
-  // ── Load stations — mirrors the 3-source merge AdminMenu.jsx uses ──
-  const loadStations = async () => {
-    setStationsLoading(true);
-    setStationError(null);
-    try {
-      const [customData, itemsData] = await Promise.all([
-        menuAPI.getStations(),
-        menuAPI.getItems(),
-      ]);
-
-      const seen   = new Set();
-      const merged = [];
-
-      // 1. Hardcoded presets (same list the Menu Quick-Pick buttons use)
-      for (const name of PRESET_STATION_NAMES) {
-        const key = name.toLowerCase();
-        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
-      }
-
-      // 2. Station names extracted from existing menu items
-      const itemStations = (Array.isArray(itemsData) ? itemsData : [])
-        .map(i => (i.kitchenStation || '').trim())
-        .filter(Boolean);
-      for (const name of itemStations) {
-        const key = name.toLowerCase();
-        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
-      }
-
-      // 3. Custom stations saved in the DB via the Menu page
-      const dbStations = (Array.isArray(customData) ? customData : [])
-        .map(s => (s.name || '').trim())
-        .filter(Boolean);
-      for (const name of dbStations) {
-        const key = name.toLowerCase();
-        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
-      }
-
-      setStations(merged);
-    } catch (err) {
-      console.error('loadStations error:', err);
-      setStationError(t('settings.printers.stationsLoadFailed'));
-    } finally {
-      setStationsLoading(false);
-    }
-  };
-  useEffect(() => { loadStations(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Receipt printer helpers ──
-  const confirmAddReceiptPrinter = () => {
-    const p = {
-      id: Date.now().toString(),
-      name: receiptDraft.name,
-      ip:   receiptDraft.ip,
-      port: Number(receiptDraft.port) || 9100,
-    };
-    set('receiptPrinters')([...(form.receiptPrinters || []), p]);
-    setReceiptDraft(EMPTY_RECEIPT_FORM);
-    setShowReceiptForm(false);
-  };
-  const updateReceiptPrinter = (id, field, value) =>
-    set('receiptPrinters')((form.receiptPrinters || []).map(p => p.id === id ? { ...p, [field]: value } : p));
-  const removeReceiptPrinter = (id) =>
-    set('receiptPrinters')((form.receiptPrinters || []).filter(p => p.id !== id));
-
-  // ── Kitchen printer helpers ──
-  const confirmAddKitchenPrinter = () => {
-    const p = {
-      id:       Date.now().toString(),
-      name:     kitchenDraft.name,
-      ip:       kitchenDraft.ip,
-      port:     Number(kitchenDraft.port) || 9100,
-      stations: kitchenDraft.stations,
-    };
-    set('kitchenPrinters')([...(form.kitchenPrinters || []), p]);
-    setKitchenDraft(emptyKitchenForm());
-    setShowKitchenForm(false);
-  };
-  const updateKitchenPrinter = (id, field, value) =>
-    set('kitchenPrinters')((form.kitchenPrinters || []).map(p => p.id === id ? { ...p, [field]: value } : p));
-  const removeKitchenPrinter = (id) =>
-    set('kitchenPrinters')((form.kitchenPrinters || []).filter(p => p.id !== id));
-
-  const toggleDraftStation = (name) => {
-    setKitchenDraft(prev => ({
-      ...prev,
-      stations: prev.stations.includes(name)
-        ? prev.stations.filter(s => s !== name)
-        : [...prev.stations, name],
-    }));
-  };
-
-  // ── Shared add-form panel ──
-  const AddFormPanel = ({ draft, setDraft, namePlaceholder, onConfirm, onCancel, showStationPicker }) => (
+// ── Add-form panel — MUST be a top-level component (not defined inside
+//    PrintersPanel) otherwise React re-mounts it on every keystroke and
+//    the input loses focus after each character. ────────────────────────────────
+function AddFormPanel({
+  draft, setDraft, namePlaceholder, onConfirm, onCancel,
+  showStationPicker, stations, stationsLoading, stationError, onRetryStations,
+  toggleDraftStation, t,
+}) {
+  return (
     <Card className="border-blue-200 bg-blue-50/20">
       <div className="px-5 py-4 flex flex-col gap-4">
         <Field label={t('settings.printers.printerName')}>
@@ -510,7 +413,7 @@ function PrintersPanel({ form, set, t }) {
             {stationError && (
               <p className="text-xs text-red-500 flex items-center gap-1">
                 <AlertCircle size={12} />{stationError}
-                <button type="button" onClick={loadStations} className="underline ml-1">{t('common.retry')}</button>
+                <button type="button" onClick={onRetryStations} className="underline ml-1">{t('common.retry')}</button>
               </p>
             )}
             {!stationsLoading && !stationError && stations.length === 0 && (
@@ -563,6 +466,92 @@ function PrintersPanel({ form, set, t }) {
       </div>
     </Card>
   );
+}
+
+function PrintersPanel({ form, set, t }) {
+  const [stations,        setStations]        = useState([]);
+  const [stationsLoading, setStationsLoading] = useState(true);
+  const [stationError,    setStationError]    = useState(null);
+
+  const [showReceiptForm, setShowReceiptForm] = useState(false);
+  const [receiptDraft,    setReceiptDraft]    = useState(EMPTY_RECEIPT_FORM);
+  const [showKitchenForm, setShowKitchenForm] = useState(false);
+  const [kitchenDraft,    setKitchenDraft]    = useState(emptyKitchenForm());
+
+  // ── Load stations — merges 3 sources to match AdminMenu.jsx ──
+  const loadStations = async () => {
+    setStationsLoading(true);
+    setStationError(null);
+    try {
+      const [customData, itemsData] = await Promise.all([
+        menuAPI.getStations(),
+        menuAPI.getItems(),
+      ]);
+
+      const seen   = new Set();
+      const merged = [];
+
+      for (const name of PRESET_STATION_NAMES) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      const itemStations = (Array.isArray(itemsData) ? itemsData : [])
+        .map(i => (i.kitchenStation || '').trim()).filter(Boolean);
+      for (const name of itemStations) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      const dbStations = (Array.isArray(customData) ? customData : [])
+        .map(s => (s.name || '').trim()).filter(Boolean);
+      for (const name of dbStations) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      setStations(merged);
+    } catch (err) {
+      console.error('loadStations error:', err);
+      setStationError(t('settings.printers.stationsLoadFailed'));
+    } finally {
+      setStationsLoading(false);
+    }
+  };
+  useEffect(() => { loadStations(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Receipt printer helpers ──
+  const confirmAddReceiptPrinter = () => {
+    const p = { id: Date.now().toString(), name: receiptDraft.name, ip: receiptDraft.ip, port: Number(receiptDraft.port) || 9100 };
+    set('receiptPrinters')([...(form.receiptPrinters || []), p]);
+    setReceiptDraft(EMPTY_RECEIPT_FORM);
+    setShowReceiptForm(false);
+  };
+  const updateReceiptPrinter = (id, field, value) =>
+    set('receiptPrinters')((form.receiptPrinters || []).map(p => p.id === id ? { ...p, [field]: value } : p));
+  const removeReceiptPrinter = (id) =>
+    set('receiptPrinters')((form.receiptPrinters || []).filter(p => p.id !== id));
+
+  // ── Kitchen printer helpers ──
+  const confirmAddKitchenPrinter = () => {
+    const p = { id: Date.now().toString(), name: kitchenDraft.name, ip: kitchenDraft.ip, port: Number(kitchenDraft.port) || 9100, stations: kitchenDraft.stations };
+    set('kitchenPrinters')([...(form.kitchenPrinters || []), p]);
+    setKitchenDraft(emptyKitchenForm());
+    setShowKitchenForm(false);
+  };
+  const updateKitchenPrinter = (id, field, value) =>
+    set('kitchenPrinters')((form.kitchenPrinters || []).map(p => p.id === id ? { ...p, [field]: value } : p));
+  const removeKitchenPrinter = (id) =>
+    set('kitchenPrinters')((form.kitchenPrinters || []).filter(p => p.id !== id));
+
+  const toggleDraftStation = (name) => {
+    setKitchenDraft(prev => ({
+      ...prev,
+      stations: prev.stations.includes(name)
+        ? prev.stations.filter(s => s !== name)
+        : [...prev.stations, name],
+    }));
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -591,6 +580,12 @@ function PrintersPanel({ form, set, t }) {
             onConfirm={confirmAddReceiptPrinter}
             onCancel={() => { setShowReceiptForm(false); setReceiptDraft(EMPTY_RECEIPT_FORM); }}
             showStationPicker={false}
+            stations={[]}
+            stationsLoading={false}
+            stationError={null}
+            onRetryStations={loadStations}
+            toggleDraftStation={toggleDraftStation}
+            t={t}
           />
         )}
 
@@ -646,6 +641,12 @@ function PrintersPanel({ form, set, t }) {
             onConfirm={confirmAddKitchenPrinter}
             onCancel={() => { setShowKitchenForm(false); setKitchenDraft(emptyKitchenForm()); }}
             showStationPicker={true}
+            stations={stations}
+            stationsLoading={stationsLoading}
+            stationError={stationError}
+            onRetryStations={loadStations}
+            toggleDraftStation={toggleDraftStation}
+            t={t}
           />
         )}
 
