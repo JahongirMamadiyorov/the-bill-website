@@ -356,7 +356,11 @@ function FinancialPanel({ form, set, t }) {
   );
 }
 
-// ── Empty add-form state helpers ─────────────────────────────────────────────
+// ── Same preset station names the Menu page uses ──────────────────────────────
+// AdminMenu.jsx has these hardcoded; we mirror them here so station lists match.
+const PRESET_STATION_NAMES = ['Salad', 'Grill', 'Bar', 'Pastry', 'Cold', 'Hot'];
+
+// ── Empty add-form state helpers ──────────────────────────────────────────────
 const EMPTY_RECEIPT_FORM = { name: '', ip: '', port: '9100' };
 const emptyKitchenForm = () => ({ name: '', ip: '', port: '9100', stations: [] });
 
@@ -372,14 +376,46 @@ function PrintersPanel({ form, set, t }) {
   const [showKitchenForm, setShowKitchenForm] = useState(false);
   const [kitchenDraft,    setKitchenDraft]    = useState(emptyKitchenForm());
 
-  // ── Load stations ──
+  // ── Load stations — mirrors the 3-source merge AdminMenu.jsx uses ──
   const loadStations = async () => {
     setStationsLoading(true);
     setStationError(null);
     try {
-      const data = await menuAPI.getStations();
-      setStations(Array.isArray(data) ? data : []);
-    } catch {
+      const [customData, itemsData] = await Promise.all([
+        menuAPI.getStations(),
+        menuAPI.getItems(),
+      ]);
+
+      const seen   = new Set();
+      const merged = [];
+
+      // 1. Hardcoded presets (same list the Menu Quick-Pick buttons use)
+      for (const name of PRESET_STATION_NAMES) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      // 2. Station names extracted from existing menu items
+      const itemStations = (Array.isArray(itemsData) ? itemsData : [])
+        .map(i => (i.kitchenStation || '').trim())
+        .filter(Boolean);
+      for (const name of itemStations) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      // 3. Custom stations saved in the DB via the Menu page
+      const dbStations = (Array.isArray(customData) ? customData : [])
+        .map(s => (s.name || '').trim())
+        .filter(Boolean);
+      for (const name of dbStations) {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push({ name }); }
+      }
+
+      setStations(merged);
+    } catch (err) {
+      console.error('loadStations error:', err);
       setStationError(t('settings.printers.stationsLoadFailed'));
     } finally {
       setStationsLoading(false);
