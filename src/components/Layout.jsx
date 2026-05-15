@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
+import { settingsAPI } from '../api/client';
+import { useKitchenPrint } from '../hooks/useKitchenPrint';
 import {
   Home, BarChart3, Users, Package, Wallet, User, LayoutDashboard, Grid3X3,
   UtensilsCrossed, ClipboardList, ShoppingCart, History, Banknote, Bell,
@@ -63,14 +65,30 @@ const NAV_ITEMS = {
   ],
 };
 
+// Roles that participate in kitchen printing
+const PRINT_ROLES = ['cashier', 'admin', 'owner'];
+
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const { t, lang, switchLang } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const role = user?.role || 'admin';
-  const rc = ROLE_STYLE[role] || ROLE_STYLE.admin;
+  const [kitchenPrinters, setKitchenPrinters] = useState([]);
+
+  const role     = user?.role || 'admin';
+  const rc       = ROLE_STYLE[role] || ROLE_STYLE.admin;
   const navItems = NAV_ITEMS[role] || [];
+
+  // ── Load kitchen printer config for print-eligible roles ──────────────────
+  useEffect(() => {
+    if (!PRINT_ROLES.includes(role) || !token) return;
+    settingsAPI.get()
+      .then(data => setKitchenPrinters(data.kitchenPrinters || []))
+      .catch(() => {}); // silent — printing degrades gracefully if unavailable
+  }, [role, token]);
+
+  // ── Real-time WebSocket kitchen printing (active on cashier panel) ─────────
+  useKitchenPrint({ token, role, kitchenPrinters });
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
