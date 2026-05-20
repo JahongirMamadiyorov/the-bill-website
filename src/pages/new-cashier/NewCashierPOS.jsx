@@ -9,7 +9,12 @@ import {
   CheckCircle2, Percent, Hash, Users, Grid3X3, ChevronDown,
 } from 'lucide-react';
 import { menuAPI, tablesAPI, ordersAPI } from '../../api/client';
+import { withCache, invalidate } from '../../utils/apiCache';
 import { useAuth } from '../../context/AuthContext';
+
+// ─── Cache TTLs ───────────────────────────────────────────────────────────────
+const MENU_TTL   = 15 * 60 * 1000;
+const TABLES_TTL = 30 * 1000;
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C   = '#0891B2';   // Cashier cyan — primary actions
@@ -199,12 +204,17 @@ export default function NewCashierPOS() {
   useEffect(() => { loadMenu(); }, []);
 
   const loadMenu = async (quiet = false) => {
+    if (quiet) {
+      invalidate('menu:categories');
+      invalidate('menu:items');
+      invalidate('tables:all');
+    }
     quiet ? setRefreshing(true) : setLoading(true);
     try {
       const [cats, menuItems, tbls] = await Promise.all([
-        menuAPI.getCategories(),
-        menuAPI.getItems(),
-        tablesAPI.getAll(),
+        withCache('menu:categories', MENU_TTL,   () => menuAPI.getCategories()),
+        withCache('menu:items',      MENU_TTL,   () => menuAPI.getItems()),
+        withCache('tables:all',      TABLES_TTL, () => tablesAPI.getAll()),
       ]);
       setCategories(Array.isArray(cats) ? cats : []);
       setItems(Array.isArray(menuItems)

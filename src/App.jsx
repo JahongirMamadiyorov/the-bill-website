@@ -33,6 +33,7 @@ import CashierTables from './pages/cashier/CashierTables';
 import CashierHistory from './pages/cashier/CashierHistory';
 import CashierLoans from './pages/cashier/CashierLoans';
 import CashierProfile from './pages/cashier/CashierProfile';
+import CashierMenu from './pages/cashier/CashierMenu';
 
 // Waitress pages
 import WaitressTables from './pages/waitress/WaitressTables';
@@ -66,7 +67,7 @@ export default function App() {
       super_admin:  '/super-admin',
       owner:        '/owner',
       admin:        '/admin',
-      cashier:      '/cashier',
+      cashier:      '/cashier/menu',
       waitress:     '/waitress',
       kitchen:      '/kitchen',
       new_cashier:  '/pos',
@@ -112,6 +113,7 @@ export default function App() {
       <Route path="/cashier" element={<ProtectedRoute roles={['cashier']}><Layout /></ProtectedRoute>}>
         <Route index element={<CashierOrders />} />
         <Route path="tables" element={<CashierTables />} />
+        <Route path="menu" element={<CashierMenu />} />
         <Route path="history" element={<CashierHistory />} />
         <Route path="loans" element={<CashierLoans />} />
         <Route path="profile" element={<CashierProfile />} />
